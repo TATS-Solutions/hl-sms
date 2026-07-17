@@ -1,8 +1,11 @@
+import { Routes, Route } from "react-router-dom"
+import Homepage from "./pages/Homepage"
+
 function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <h1 className="text-3xl font-semibold">hl-sms</h1>
-    </div>
+    <Routes>
+      <Route path="/" element={<Homepage />} />
+    </Routes>
   )
 }
 

@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+@theme {
+  --color-background: #F5EFE6;
+  --color-foreground: #2B2B2B;
+  --color-card: #FEFCF8;
+  --color-primary: #163A5C;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #EAE2D6;
+  --color-muted: #E5DECE;
+  --color-muted-foreground: #8A94A6;
+  --color-accent: #2B7A78;
+  --color-accent-foreground: #FFFFFF;
+  --color-destructive: #B5533C;
+  --color-border: rgba(22, 58, 92, 0.14);
+  --color-input-background: #EDE5D8;
+
+  --font-heading: "Source Serif 4", Georgia, serif;
+  --font-body: "Public Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "Courier New", monospace;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-body);
+  }
+}
