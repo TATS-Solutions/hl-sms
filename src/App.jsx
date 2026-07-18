@@ -4,6 +4,7 @@ import Homepage from "./pages/Homepage"
 import ServiceDetail from "./pages/ServiceDetail"
 import BookingFlow from "./pages/BookingFlow"
 import ClaimTicket from "./pages/ClaimTicket"
+import MyBookings from "./pages/MyBookings"
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/services/:id" element={<ServiceDetail />} />
         <Route path="/book/:serviceId" element={<BookingFlow />} />
         <Route path="/ticket/:reference" element={<ClaimTicket />} />
+        <Route path="/my-bookings" element={<MyBookings />} />
       </Routes>
     </>
   )
