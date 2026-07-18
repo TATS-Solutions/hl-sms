@@ -1,5 +1,14 @@
 const STORAGE_KEY = "hl-sms-bookings";
 
+function generateReference() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return `HLG-${code}`;
+}
+
 function seedDemoBooking() {
   const existing = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
   if (existing.some((b) => b.reference === "HLG-DEMO1")) return;
@@ -11,6 +20,7 @@ function seedDemoBooking() {
     reference: "HLG-DEMO1",
     status: "upcoming",
     serviceId: "mho-1",
+    deptId: "mho",
     serviceName: "Medical Consultation",
     departmentName: "Municipal Health Office",
     date: demoDate.toISOString(),
@@ -22,15 +32,6 @@ function seedDemoBooking() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
 }
 seedDemoBooking();
-
-function generateReference() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return `HLG-${code}`;
-}
 
 export function getAllBookings() {
   try {
@@ -57,18 +58,22 @@ export function getBookingByReference(reference) {
   return getAllBookings().find((b) => b.reference === reference);
 }
 
-export function cancelBooking(reference) {
-  const bookings = getAllBookings();
-  const updated = bookings.map((b) =>
-    b.reference === reference ? { ...b, status: "cancelled" } : b
-  );
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-}
-
 export function findBooking(reference, mobile) {
   return getAllBookings().find(
     (b) =>
       b.reference.toLowerCase() === reference.trim().toLowerCase() &&
       b.mobile.replace(/\D/g, "") === mobile.trim().replace(/\D/g, "")
   );
+}
+
+export function updateBookingStatus(reference, status) {
+  const bookings = getAllBookings();
+  const updated = bookings.map((b) =>
+    b.reference === reference ? { ...b, status } : b
+  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+}
+
+export function cancelBooking(reference) {
+  updateBookingStatus(reference, "cancelled");
 }

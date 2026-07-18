@@ -5,6 +5,8 @@ import ServiceDetail from "./pages/ServiceDetail"
 import BookingFlow from "./pages/BookingFlow"
 import ClaimTicket from "./pages/ClaimTicket"
 import MyBookings from "./pages/MyBookings"
+import StaffLogin from "./pages/StaffLogin"
+import StaffDashboard from "./pages/StaffDashboard"
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
         <Route path="/book/:serviceId" element={<BookingFlow />} />
         <Route path="/ticket/:reference" element={<ClaimTicket />} />
         <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/staff/login" element={<StaffLogin />} />
+        <Route path="/staff/dashboard" element={<StaffDashboard />} />
       </Routes>
     </>
   )

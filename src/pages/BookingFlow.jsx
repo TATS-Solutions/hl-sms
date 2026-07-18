@@ -50,6 +50,7 @@ export default function BookingFlow() {
   const handleConfirm = () => {
     const booking = saveBooking({
       serviceId: service.id,
+      deptId: service.deptId,
       serviceName: service.name,
       departmentName: department.name,
       date: selectedDate.toISOString(),
