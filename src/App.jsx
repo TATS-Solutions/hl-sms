@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, useLocation } from "react-router-dom"
 import Header from "./components/Header"
 import Homepage from "./pages/Homepage"
 import ServiceDetail from "./pages/ServiceDetail"
@@ -9,18 +9,23 @@ import StaffLogin from "./pages/StaffLogin"
 import StaffDashboard from "./pages/StaffDashboard"
 
 function App() {
+  const location = useLocation();
+  const isHome = location.pathname === "/";
+
   return (
     <>
       <Header />
-      <Routes>
-        <Route path="/" element={<Homepage />} />
-        <Route path="/services/:id" element={<ServiceDetail />} />
-        <Route path="/book/:serviceId" element={<BookingFlow />} />
-        <Route path="/ticket/:reference" element={<ClaimTicket />} />
-        <Route path="/my-bookings" element={<MyBookings />} />
-        <Route path="/staff/login" element={<StaffLogin />} />
-        <Route path="/staff/dashboard" element={<StaffDashboard />} />
-      </Routes>
+      <div className={isHome ? "" : "pt-16"}>
+        <Routes>
+          <Route path="/" element={<Homepage />} />
+          <Route path="/services/:id" element={<ServiceDetail />} />
+          <Route path="/book/:serviceId" element={<BookingFlow />} />
+          <Route path="/ticket/:reference" element={<ClaimTicket />} />
+          <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/staff/login" element={<StaffLogin />} />
+          <Route path="/staff/dashboard" element={<StaffDashboard />} />
+        </Routes>
+      </div>
     </>
   )
 }
