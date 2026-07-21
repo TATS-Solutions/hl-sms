@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, ChevronRight, Clock, X, Shield } from "lucide-react";
+import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DEPARTMENTS, CATEGORIES, SERVICES, QUICK_CHIPS, getDept, getSvc } from "../data/services";
+import { DEPARTMENTS, CATEGORIES, SERVICES, QUICK_CHIPS, HOW_STEPS, getDept, getSvc } from "../data/services";
 
+const STEP_ICONS = [SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck];
 export default function Homepage() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
@@ -125,6 +126,71 @@ export default function Homepage() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="bg-background py-16 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-2xl font-bold text-primary mb-2" style={{ fontFamily: "var(--font-heading)" }}>
+              How it works
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              From search to service completion in five straightforward steps.
+            </p>
+          </div>
+
+          {/* Desktop: connected horizontal flow */}
+          <div className="hidden sm:block relative">
+            <div className="absolute top-7 left-0 right-0 h-px bg-border" style={{ margin: "0 3.5rem" }} />
+            <div className="relative flex justify-between">
+              {HOW_STEPS.map((step, index) => {
+                const StepIcon = STEP_ICONS[index];
+                return (
+                  <div key={step.n} className="flex flex-col items-center text-center w-32">
+                    <div className="relative z-10 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-md ring-4 ring-background">
+                      <StepIcon size={22} strokeWidth={1.75} />
+                    </div>
+                    <div
+                      className="text-[10px] font-bold text-accent tracking-[0.15em] mt-4 mb-1 uppercase"
+                      style={{ fontFamily: "var(--font-mono)" }}
+                    >
+                      {step.n}
+                    </div>
+                    <div className="text-sm font-semibold text-foreground leading-snug">{step.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Mobile: vertical flow */}
+          <div className="sm:hidden space-y-6">
+            {HOW_STEPS.map((step, index) => {
+              const StepIcon = STEP_ICONS[index];
+              const isLast = index === HOW_STEPS.length - 1;
+              return (
+                <div key={step.n} className="flex items-start gap-4">
+                  <div className="flex flex-col items-center flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-md">
+                      <StepIcon size={20} strokeWidth={1.75} />
+                    </div>
+                    {!isLast && <div className="w-px flex-1 min-h-6 bg-border mt-2" />}
+                  </div>
+                  <div className="pt-2.5">
+                    <div
+                      className="text-[10px] font-bold text-accent tracking-[0.15em] mb-1 uppercase"
+                      style={{ fontFamily: "var(--font-mono)" }}
+                    >
+                      {step.n}
+                    </div>
+                    <div className="text-sm font-semibold text-foreground leading-snug">{step.label}</div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

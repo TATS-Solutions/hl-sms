@@ -46,5 +46,13 @@ export const QUICK_CHIPS = [
   { label: "Family Planning", svcId: "mho-5" },
 ];
 
+export const HOW_STEPS = [
+  { n: "01", label: "Choose Service" },
+  { n: "02", label: "Select Schedule" },
+  { n: "03", label: "Get Confirmation" },
+  { n: "04", label: "Visit Office" },
+  { n: "05", label: "Complete Service" },
+];
+
 export const getDept = (id) => DEPARTMENTS.find(d => d.id === id) ?? DEPARTMENTS[0];
 export const getSvc = (id) => SERVICES.find(s => s.id === id) ?? SERVICES[0];
