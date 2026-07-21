@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Building2 } from "lucide-react";
 import { staffLogin } from "../data/staffAuth";
 
 export default function StaffLogin() {
@@ -19,36 +20,45 @@ export default function StaffLogin() {
 
     return (
         <div className="max-w-sm mx-auto px-4 py-16">
-            <h1 className="text-xl font-semibold text-foreground mb-1 text-center" style={{ fontFamily: "var(--font-heading)" }}>
-                Staff Sign In
-            </h1>
-            <p className="text-muted-foreground text-sm mb-6 text-center">
-                Municipal staff access only.
-            </p>
+            <div className="text-center mb-8">
+                <div className="w-14 h-14 bg-primary rounded-2xl mx-auto mb-3 flex items-center justify-center shadow-lg">
+                    <Building2 size={24} className="text-white" />
+                </div>
+                <h1 className="text-xl font-bold text-primary" style={{ fontFamily: "var(--font-heading)" }}>
+                    Staff Portal
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                    Municipality of Hilongos — Internal Use Only
+                </p>
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="bg-card rounded-2xl border border-border p-6 space-y-4 shadow-sm">
                 <div>
-                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                    <label htmlFor="staff-email" className="block text-sm font-medium mb-1.5">
                         Email
                     </label>
                     <input
+                        id="staff-email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="staff@hilongos.gov.ph"
-                        className="w-full bg-input-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        autoComplete="username"
+                        className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
                 </div>
                 <div>
-                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                    <label htmlFor="staff-password" className="block text-sm font-medium mb-1.5">
                         Password
                     </label>
                     <input
+                        id="staff-password"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full bg-input-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        autoComplete="current-password"
+                        className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
                 </div>
 
@@ -57,10 +67,14 @@ export default function StaffLogin() {
                 <button
                     type="submit"
                     disabled={!email.trim() || !password}
-                    className="w-full bg-primary text-white rounded py-3 font-semibold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="w-full bg-primary text-white rounded-xl py-3 text-sm font-semibold hover:bg-primary/90 transition-colors shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                     Sign In
                 </button>
+
+                <p className="text-xs text-center text-muted-foreground">
+                    Demo: staff@hilongos.gov.ph / staff2026
+                </p>
             </form>
         </div>
     );
