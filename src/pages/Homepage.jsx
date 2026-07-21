@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight } from "lucide-react";
+import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DEPARTMENTS, CATEGORIES, CATEGORIES_FULL, SERVICES, QUICK_CHIPS, HOW_STEPS, getDept, getSvc } from "../data/services";
+import { DEPARTMENTS, CATEGORIES, CATEGORIES_FULL, SERVICES, QUICK_CHIPS, HOW_STEPS, SERVICE_STATS, getDept, getSvc } from "../data/services";
 
 const STEP_ICONS = [SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck];
 export default function Homepage() {
@@ -253,27 +253,61 @@ export default function Homepage() {
               <h2 className="text-base font-semibold text-primary border-b border-border pb-2 mb-4" style={{ fontFamily: "var(--font-heading)" }}>
                 {c.label}
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {catSvcs.map(s => {
                   const dept = getDept(s.deptId);
+                  const stats = SERVICE_STATS[s.id] ?? { queue: 6, next: "3:00 PM" };
                   return (
-                    <button
+                    <div
                       key={s.id}
-                      onClick={() => navigate(`/services/${s.id}`)}
-                      className="bg-card text-left rounded border border-border hover:border-accent/50 hover:shadow-sm transition-all p-5 group"
+                      className="bg-card border border-border rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all"
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 font-medium">{dept.shortName}</div>
-                          <div className="font-semibold text-foreground mb-1.5 text-sm">{s.name}</div>
-                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{s.desc}</p>
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0">
+                          <s.Icon size={22} className="text-primary" strokeWidth={1.75} />
                         </div>
-                        <ChevronRight size={15} className="text-accent flex-shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-bold text-foreground text-sm leading-snug">{s.name}</h3>
+                            <span className="text-[10px] bg-primary/8 text-primary rounded-full px-2 py-0.5 font-semibold flex-shrink-0 border border-primary/12">
+                              {dept.shortName}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">{s.desc}</p>
+                        </div>
                       </div>
-                      <div className="mt-3 flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <Clock size={11} /><span>{s.time}</span>
+
+                      <div className="grid grid-cols-3 gap-2 mb-4">
+                        <div className="bg-background rounded-xl px-2 py-2 text-center">
+                          <Clock size={12} className="text-muted-foreground mx-auto mb-1" />
+                          <div className="text-[10px] text-muted-foreground mb-0.5">Duration</div>
+                          <div className="font-semibold text-foreground text-[11px] leading-tight">{s.time}</div>
+                        </div>
+                        <div className="bg-background rounded-xl px-2 py-2 text-center">
+                          <Users size={12} className="text-muted-foreground mx-auto mb-1" />
+                          <div className="text-[10px] text-muted-foreground mb-0.5">Queue</div>
+                          <div className="font-semibold text-foreground text-[11px] leading-tight">{stats.queue} now</div>
+                        </div>
+                        <div className="bg-background rounded-xl px-2 py-2 text-center">
+                          <Calendar size={12} className="text-muted-foreground mx-auto mb-1" />
+                          <div className="text-[10px] text-muted-foreground mb-0.5">Next slot</div>
+                          <div className="font-semibold text-foreground text-[11px] leading-tight">{stats.next}</div>
+                        </div>
                       </div>
-                    </button>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-green-500" />
+                          <span className="text-xs text-green-700 font-medium">Available Today</span>
+                        </div>
+                        <button
+                          onClick={() => navigate(`/services/${s.id}`)}
+                          className="text-sm bg-primary text-white rounded-xl px-4 py-2 font-semibold hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                        >
+                          Book <ArrowRight size={13} />
+                        </button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>

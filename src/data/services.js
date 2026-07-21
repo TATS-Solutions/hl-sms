@@ -67,5 +67,16 @@ export const CATEGORIES_FULL = [
   { id: "edu", label: "Education", Icon: GraduationCap, active: false },
 ];
 
+export const SERVICE_STATS = {
+  "mho-1": { queue: 12, next: "2:30 PM" },
+  "mho-2": { queue: 5, next: "9:00 AM" },
+  "mho-3": { queue: 8, next: "10:00 AM" },
+  "mho-4": { queue: 3, next: "1:00 PM" },
+  "mho-5": { queue: 7, next: "3:00 PM" },
+  "mswdo-1": { queue: 2, next: "8:00 AM" },
+  "mswdo-2": { queue: 9, next: "2:00 PM" },
+  "mswdo-3": { queue: 4, next: "1:30 PM" },
+};
+
 export const getDept = (id) => DEPARTMENTS.find(d => d.id === id) ?? DEPARTMENTS[0];
 export const getSvc = (id) => SERVICES.find(s => s.id === id) ?? SERVICES[0];
