@@ -1,4 +1,4 @@
-import { Activity, Heart, Baby, FlaskConical, Pill, HeartHandshake, FileText, Banknote } from "lucide-react";
+import { Activity, Heart, Baby, FlaskConical, Pill, HeartHandshake, FileText, Banknote, HeartPulse, Users, ScrollText, Briefcase, Landmark, Leaf, Wrench, TreePine, ShieldCheck, GraduationCap } from "lucide-react";
 
 export const DEPARTMENTS = [
   { id: "mho", name: "Municipal Health Office", shortName: "MHO" },
@@ -52,6 +52,19 @@ export const HOW_STEPS = [
   { n: "03", label: "Get Confirmation" },
   { n: "04", label: "Visit Office" },
   { n: "05", label: "Complete Service" },
+];
+
+export const CATEGORIES_FULL = [
+  { id: "health", label: "Health", Icon: HeartPulse, active: true },
+  { id: "social", label: "Social Services", Icon: Users, active: true },
+  { id: "civil", label: "Civil Registry", Icon: ScrollText, active: false },
+  { id: "biz", label: "Business", Icon: Briefcase, active: false },
+  { id: "treasury", label: "Treasury", Icon: Landmark, active: false },
+  { id: "agri", label: "Agriculture", Icon: Leaf, active: false },
+  { id: "eng", label: "Engineering", Icon: Wrench, active: false },
+  { id: "env", label: "Environment", Icon: TreePine, active: false },
+  { id: "safety", label: "Public Safety", Icon: ShieldCheck, active: false },
+  { id: "edu", label: "Education", Icon: GraduationCap, active: false },
 ];
 
 export const getDept = (id) => DEPARTMENTS.find(d => d.id === id) ?? DEPARTMENTS[0];

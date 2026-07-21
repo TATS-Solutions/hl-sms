@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DEPARTMENTS, CATEGORIES, SERVICES, QUICK_CHIPS, HOW_STEPS, getDept, getSvc } from "../data/services";
+import { DEPARTMENTS, CATEGORIES, CATEGORIES_FULL, SERVICES, QUICK_CHIPS, HOW_STEPS, getDept, getSvc } from "../data/services";
 
 const STEP_ICONS = [SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck];
 export default function Homepage() {
@@ -195,26 +195,47 @@ export default function Homepage() {
         </div>
       </section>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Category filter bar */}
-        <div className="flex items-center gap-2 mb-6 flex-wrap">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground mr-1 hidden sm:inline">Filter by</span>
-          <button
-            onClick={() => setCat(null)}
-            className={`px-3 py-1.5 rounded text-sm border transition-colors ${!cat ? "bg-primary text-white border-primary" : "bg-card border-border hover:border-primary/40"}`}
-          >
-            All Services
-          </button>
-          {CATEGORIES.map(c => (
-            <button
-              key={c.id}
-              onClick={() => setCat(cat === c.id ? null : c.id)}
-              className={`px-3 py-1.5 rounded text-sm border transition-colors ${cat === c.id ? "bg-primary text-white border-primary" : "bg-card border-border hover:border-primary/40"}`}
-            >
-              {c.label}
-            </button>
-          ))}
+      {/* Category Pills */}
+      <section className="bg-card py-12 px-4 border-y border-border">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl font-bold text-primary mb-6 text-center" style={{ fontFamily: "var(--font-heading)" }}>
+            Browse by Category
+          </h2>
+          <div className="flex flex-wrap justify-center gap-2">
+            {CATEGORIES_FULL.map(c => (
+              <button
+                key={c.id}
+                onClick={() => c.active && setCat(cat === c.id ? null : c.id)}
+                disabled={!c.active}
+                title={!c.active ? "Coming in a future phase" : undefined}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-medium transition-all ${
+                  !c.active
+                    ? "border-border text-muted-foreground/40 cursor-not-allowed"
+                    : cat === c.id
+                    ? "bg-primary text-white border-primary shadow-md"
+                    : "bg-background border-border text-foreground hover:border-primary/50 hover:shadow-sm"
+                }`}
+              >
+                <c.Icon size={16} strokeWidth={1.75} />
+                <span>{c.label}</span>
+                {!c.active && <span className="text-[9px] uppercase tracking-wide ml-0.5 opacity-50">Soon</span>}
+              </button>
+            ))}
+          </div>
         </div>
+      </section>
+
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        {(cat) && (
+          <div className="flex items-center gap-2 mb-6">
+            <button
+              onClick={() => setCat(null)}
+              className="text-sm text-accent hover:underline flex items-center gap-1"
+            >
+              <X size={13} /> Clear category filter
+            </button>
+          </div>
+        )}
 
         {q && (
           <p className="text-sm text-muted-foreground mb-5">
