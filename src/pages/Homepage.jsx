@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight, Users } from "lucide-react";
+import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight, Users, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DEPARTMENTS, CATEGORIES, CATEGORIES_FULL, SERVICES, QUICK_CHIPS, HOW_STEPS, SERVICE_STATS, getDept, getSvc } from "../data/services";
+import hilongosLogo from "../assets/hilongos-logo.png";
 
 const STEP_ICONS = [SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck];
 export default function Homepage() {
@@ -322,6 +323,91 @@ export default function Homepage() {
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="bg-primary text-white">
+        <div className="max-w-6xl mx-auto px-4 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-9 h-9 flex items-center justify-center">
+                <img src={hilongosLogo} alt="Municipality of Hilongos" className="w-full h-full object-contain" />
+              </div>
+              <div>
+                <div className="text-[9px] uppercase tracking-widest text-white/40 leading-none">Official Portal</div>
+                <div className="text-sm font-bold leading-tight" style={{ fontFamily: "var(--font-heading)" }}>
+                  Hilongos, Leyte
+                </div>
+              </div>
+            </div>
+            <p className="text-white/50 text-xs leading-relaxed mb-4">
+              The official digital service portal of the Municipality of Hilongos, Leyte, Philippines.
+            </p>
+            <div className="flex gap-2">
+              {["Facebook", "Twitter", "YouTube"].map(s => (
+                <button
+                  key={s}
+                  className="text-[11px] bg-white/10 hover:bg-white/18 px-2.5 py-1.5 rounded-lg transition-colors text-white/60 hover:text-white"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-3 font-semibold">Services</div>
+            <ul className="space-y-2">
+              {["Health & Family", "Social Services", "Civil Registry", "Business Permits", "Treasury"].map(item => (
+                <li key={item}>
+                  <button className="text-sm text-white/55 hover:text-white transition-colors">{item}</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-3 font-semibold">Information</div>
+            <ul className="space-y-2">
+              {["Citizen Charter", "Privacy Policy", "Accessibility Statement", "Open Data", "Submit Feedback"].map(item => (
+                <li key={item}>
+                  <button className="text-sm text-white/55 hover:text-white transition-colors">{item}</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-3 font-semibold">Contact</div>
+            <div className="space-y-2.5 text-sm text-white/55">
+              <div className="flex items-start gap-2">
+                <MapPin size={13} className="mt-0.5 flex-shrink-0" />
+                <span>Hilongos, Leyte 6524<br />Philippines</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone size={13} />
+                <span>(053) 561-0001</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail size={13} />
+                <span>info@hilongos.gov.ph</span>
+              </div>
+            </div>
+            <div className="mt-4 bg-white/8 border border-white/10 rounded-xl p-3 text-xs text-white/55">
+              <div className="font-semibold text-white/75 mb-1.5 flex items-center gap-1.5">
+                <Clock size={11} />
+                Office Hours
+              </div>
+              <div>Monday – Friday</div>
+              <div>8:00 AM – 5:00 PM</div>
+              <div className="text-red-300 mt-1.5 font-medium">Emergency: (053) 561-0002</div>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-white/10 px-4 py-4 max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-white/30">
+          <span>&copy; 2026 Municipality of Hilongos. All rights reserved.</span>
+          <span>Phase 1 — Unified Appointment System</span>
+        </div>
+      </footer>
     </div>
   );
 }
