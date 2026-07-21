@@ -19,6 +19,7 @@ export default function BookingFlow() {
   const [fullName, setFullName] = useState("");
   const [mobile, setMobile] = useState("");
   const [mobileError, setMobileError] = useState("");
+  const [consentChecked, setConsentChecked] = useState(false);
 
   if (!service) {
     return (
@@ -149,9 +150,25 @@ export default function BookingFlow() {
               <SummaryRow label="Name" value={fullName} onEdit={() => setStep(3)} />
               <SummaryRow label="Mobile Number" value={mobile} onEdit={() => setStep(3)} />
             </div>
+
+            <label className="flex items-start gap-2.5 mt-6 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consentChecked}
+                onChange={(e) => setConsentChecked(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-accent flex-shrink-0"
+              />
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                I consent to the Municipality of Hilongos collecting and processing my personal
+                information above for the purpose of scheduling and managing this appointment,
+                in accordance with the Data Privacy Act of 2012.
+              </span>
+            </label>
+
             <button
               onClick={handleConfirm}
-              className="w-full mt-6 bg-accent text-white rounded py-3 font-semibold hover:bg-accent/90 transition-colors"
+              disabled={!consentChecked}
+              className="w-full mt-4 bg-accent text-white rounded py-3 font-semibold hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Confirm Booking
             </button>

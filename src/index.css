@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #F5EFE6;
-  --color-foreground: #2B2B2B;
-  --color-card: #FEFCF8;
-  --color-primary: #163A5C;
+  --color-background: #F8F6F2;
+  --color-foreground: #1C1C2E;
+  --color-card: #FFFFFF;
+  --color-primary: #183A61;
   --color-primary-foreground: #FFFFFF;
-  --color-secondary: #EAE2D6;
-  --color-muted: #E5DECE;
-  --color-muted-foreground: #8A94A6;
-  --color-accent: #2B7A78;
-  --color-accent-foreground: #FFFFFF;
-  --color-destructive: #B5533C;
-  --color-border: rgba(22, 58, 92, 0.14);
-  --color-input-background: #EDE5D8;
+  --color-secondary: #EEF2F7;
+  --color-muted: #F0EDE8;
+  --color-muted-foreground: #6B7280;
+  --color-accent: #D4A017;
+  --color-accent-foreground: #1C1C2E;
+  --color-destructive: #DC2626;
+  --color-border: rgba(24, 58, 97, 0.12);
+  --color-input-background: #F4F1ED;
 
-  --font-heading: "Source Serif 4", Georgia, serif;
-  --font-body: "Public Sans", system-ui, sans-serif;
+  --font-heading: "Libre Baskerville", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "Courier New", monospace;
 }
 
