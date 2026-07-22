@@ -7,6 +7,7 @@ import ClaimTicket from "./pages/ClaimTicket"
 import MyBookings from "./pages/MyBookings"
 import StaffLogin from "./pages/StaffLogin"
 import StaffDashboard from "./pages/StaffDashboard"
+import ApiCheck from "./pages/ApiCheck"
 
 function App() {
   const location = useLocation();
@@ -24,6 +25,7 @@ function App() {
           <Route path="/my-bookings" element={<MyBookings />} />
           <Route path="/staff/login" element={<StaffLogin />} />
           <Route path="/staff/dashboard" element={<StaffDashboard />} />
+          <Route path="/api-check" element={<ApiCheck />} />
         </Routes>
       </div>
     </>
