@@ -4,20 +4,7 @@ import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, AlertCircle, F
 import { isStaffAuthenticated, staffLogout } from "../data/staffAuth";
 import { getAllBookings, updateBookingStatus } from "../data/bookings";
 import { DEPARTMENTS, getDept, getSvc } from "../data/services";
-
-const STATUS_BADGE = {
-  upcoming: "bg-blue-50 text-blue-800 border-blue-200",
-  done: "bg-green-50 text-green-800 border-green-200",
-  "no-show": "bg-amber-50 text-amber-800 border-amber-200",
-  cancelled: "bg-red-50 text-red-800 border-red-200",
-};
-
-const STATUS_LABEL = {
-  upcoming: "Upcoming",
-  done: "Completed",
-  "no-show": "No-show",
-  cancelled: "Cancelled",
-};
+import { getStatusInfo } from "../data/statusMap";
 
 function todayStr() {
   const d = new Date();
@@ -116,7 +103,7 @@ export default function StaffDashboard() {
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5 text-xs text-amber-800 flex items-start gap-2">
         <AlertCircle size={13} className="mt-px flex-shrink-0" />
         <span>
-          <strong>Phase 2 roadmap:</strong> Department-specific staff accounts and role-based access control are planned for the next phase.
+          <strong>Preview build:</strong> This dashboard runs on local demo data pending staff API endpoints — see BACKEND_HANDOFF_STAFF_NEEDS.md for what's needed. Department-specific staff accounts and role-based access control are planned for a later phase.
         </span>
       </div>
 
@@ -198,12 +185,12 @@ export default function StaffDashboard() {
                       <div className="text-xs text-muted-foreground">{b.slot}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full border font-semibold whitespace-nowrap ${STATUS_BADGE[b.status]}`}>
-                        {STATUS_LABEL[b.status]}
+                      <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold whitespace-nowrap ${getStatusInfo(b.status).color}`}>
+                        {getStatusInfo(b.status).label}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {b.status === "upcoming" ? (
+                      {["pending", "pending_assessment", "pending_payment", "processing"].includes(b.status) ? (
                         <div className="flex gap-1.5 flex-wrap">
                           <button
                             onClick={() => handleAction(b.reference, "done")}
