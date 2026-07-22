@@ -1,27 +1,37 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Pencil } from "lucide-react";
-import { SERVICES, getDept } from "../data/services";
-import { saveBooking } from "../data/bookings";
+import { useServiceDetail } from "../hooks/useServiceDetail";
+import { submitServiceRequest } from "../api/serviceRequests";
 import StepIndicator from "../components/StepIndicator";
 import DateSlotPicker from "../components/DateSlotPicker";
+import DynamicField from "../components/DynamicField";
 
 const MOBILE_REGEX = /^(09\d{9}|\+639\d{9})$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function BookingFlow() {
-  const { serviceId } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
-  const service = SERVICES.find((s) => s.id === serviceId);
+  const { data: service, isLoading, isError } = useServiceDetail(slug);
 
   const [step, setStep] = useState(2);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [fullName, setFullName] = useState("");
   const [mobile, setMobile] = useState("");
-  const [mobileError, setMobileError] = useState("");
+  const [email, setEmail] = useState("");
+  const [formData, setFormData] = useState({});
+  const [fieldErrors, setFieldErrors] = useState({});
   const [consentChecked, setConsentChecked] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  if (!service) {
+  if (isLoading) {
+    return <div className="max-w-2xl mx-auto px-4 py-16 text-center text-muted-foreground text-sm">Loading…</div>;
+  }
+
+  if (isError || !service) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <p className="text-muted-foreground text-sm">Service not found.</p>
@@ -32,34 +42,62 @@ export default function BookingFlow() {
     );
   }
 
-  const department = getDept(service.deptId);
-
   const goBack = () => {
-    if (step === 2) navigate(`/services/${service.id}`);
+    if (step === 2) navigate(`/services/${service.slug}`);
     else setStep(step - 1);
   };
 
   const handleDetailsSubmit = () => {
+    const errors = {};
     if (!MOBILE_REGEX.test(mobile.trim())) {
-      setMobileError("Enter a valid PH mobile number (e.g. 09171234567)");
-      return;
+      errors.mobile = "Enter a valid PH mobile number (e.g. 09171234567)";
     }
-    setMobileError("");
+    if (!EMAIL_REGEX.test(email.trim())) {
+      errors.email = "Enter a valid email address";
+    }
+    service.form_schema.fields.forEach((field) => {
+      if (field.validation?.required && !formData[field.name]) {
+        errors[field.name] = "This field is required";
+      }
+    });
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
     setStep(4);
   };
 
-  const handleConfirm = () => {
-    const booking = saveBooking({
-      serviceId: service.id,
-      deptId: service.deptId,
-      serviceName: service.name,
-      departmentName: department.name,
-      date: selectedDate.toISOString(),
-      slot: selectedSlot,
-      fullName: fullName.trim(),
-      mobile: mobile.trim(),
-    });
-    navigate(`/ticket/${booking.reference}`);
+  const handleConfirm = async () => {
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      const response = await submitServiceRequest({
+        service_id: service.id,
+        resident_name: fullName.trim(),
+        resident_phone: mobile.trim(),
+        resident_email: email.trim(),
+        booked_for_name: null,
+        scheduled_date: selectedDate.toISOString().slice(0, 10),
+        scheduled_time: selectedSlot,
+        form_data: formData,
+      });
+      navigate(`/ticket/${response.data.meta.reference_code}`, {
+        state: {
+          referenceCode: response.data.meta.reference_code,
+          trackingUrl: response.data.meta.signed_tracking_url,
+          serviceName: service.name,
+          departmentName: service.department_name,
+          residentName: fullName.trim(),
+          residentPhone: mobile.trim(),
+          date: selectedDate.toISOString(),
+          slot: selectedSlot,
+        },
+      });
+    } catch (err) {
+      setSubmitError(
+        err.response?.data?.message || "Something went wrong submitting your application. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -70,9 +108,9 @@ export default function BookingFlow() {
 
       <StepIndicator currentStep={step} />
 
-      <div className="bg-card rounded border border-border p-6">
+      <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
-          {department.shortName}
+          {service.department_name}
         </div>
         <h1 className="text-xl font-semibold text-foreground mb-6" style={{ fontFamily: "var(--font-heading)" }}>
           {service.name}
@@ -92,7 +130,7 @@ export default function BookingFlow() {
             <button
               disabled={!selectedDate || !selectedSlot}
               onClick={() => setStep(3)}
-              className="w-full mt-6 bg-primary text-white rounded py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full mt-6 bg-primary text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Continue <ArrowRight size={16} />
             </button>
@@ -104,34 +142,56 @@ export default function BookingFlow() {
             <div className="space-y-4">
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                  Full Name
+                  Full Name <span className="text-destructive">*</span>
                 </label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Juan Dela Cruz"
-                  className="w-full bg-input-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
-                  Mobile Number
+                  Mobile Number <span className="text-destructive">*</span>
                 </label>
                 <input
                   type="tel"
                   value={mobile}
                   onChange={(e) => setMobile(e.target.value)}
                   placeholder="09171234567"
-                  className="w-full bg-input-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                 />
-                {mobileError && <p className="text-destructive text-xs mt-1.5">{mobileError}</p>}
+                {fieldErrors.mobile && <p className="text-destructive text-xs mt-1.5">{fieldErrors.mobile}</p>}
               </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 block">
+                  Email Address <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="juan@example.com"
+                  className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                />
+                {fieldErrors.email && <p className="text-destructive text-xs mt-1.5">{fieldErrors.email}</p>}
+              </div>
+
+              {service.form_schema.fields.map((field) => (
+                <DynamicField
+                  key={field.name}
+                  field={field}
+                  value={formData[field.name]}
+                  onChange={(val) => setFormData((prev) => ({ ...prev, [field.name]: val }))}
+                  error={fieldErrors[field.name]}
+                />
+              ))}
             </div>
             <button
-              disabled={!fullName.trim() || !mobile.trim()}
               onClick={handleDetailsSubmit}
-              className="w-full mt-6 bg-primary text-white rounded py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full mt-6 bg-primary text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
             >
               Continue <ArrowRight size={16} />
             </button>
@@ -149,6 +209,15 @@ export default function BookingFlow() {
               />
               <SummaryRow label="Name" value={fullName} onEdit={() => setStep(3)} />
               <SummaryRow label="Mobile Number" value={mobile} onEdit={() => setStep(3)} />
+              <SummaryRow label="Email" value={email} onEdit={() => setStep(3)} />
+              {service.form_schema.fields.map((field) => (
+                <SummaryRow
+                  key={field.name}
+                  label={field.label}
+                  value={formData[field.name] || "—"}
+                  onEdit={() => setStep(3)}
+                />
+              ))}
             </div>
 
             <label className="flex items-start gap-2.5 mt-6 cursor-pointer">
@@ -160,17 +229,19 @@ export default function BookingFlow() {
               />
               <span className="text-xs text-muted-foreground leading-relaxed">
                 I consent to the Municipality of Hilongos collecting and processing my personal
-                information above for the purpose of scheduling and managing this appointment,
-                in accordance with the Data Privacy Act of 2012.
+                information above for the purpose of processing this application, in accordance
+                with the Data Privacy Act of 2012.
               </span>
             </label>
 
+            {submitError && <p className="text-destructive text-sm mt-3">{submitError}</p>}
+
             <button
               onClick={handleConfirm}
-              disabled={!consentChecked}
-              className="w-full mt-4 bg-accent text-white rounded py-3 font-semibold hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              disabled={!consentChecked || submitting}
+              className="w-full mt-4 bg-accent text-white rounded-xl py-3 font-semibold hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Confirm Booking
+              {submitting ? "Submitting…" : "Confirm & Submit"}
             </button>
           </>
         )}

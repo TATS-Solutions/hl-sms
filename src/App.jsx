@@ -20,7 +20,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Homepage />} />
           <Route path="/services/:slug" element={<ServiceDetail />} />
-          <Route path="/book/:serviceId" element={<BookingFlow />} />
+          <Route path="/book/:slug" element={<BookingFlow />} />
           <Route path="/ticket/:reference" element={<ClaimTicket />} />
           <Route path="/my-bookings" element={<MyBookings />} />
           <Route path="/staff/login" element={<StaffLogin />} />
