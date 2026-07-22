@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight, Users, Phone, Mail } from "lucide-react";
+import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight, Users, Phone, Mail, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { DEPARTMENTS, CATEGORIES, CATEGORIES_FULL, SERVICES, QUICK_CHIPS, HOW_STEPS, SERVICE_STATS, getDept, getSvc } from "../data/services";
+import { CATEGORIES_FULL, HOW_STEPS } from "../data/services";
+import { useServices } from "../hooks/useServices";
 import hilongosLogo from "../assets/hilongos-logo.png";
 
 const STEP_ICONS = [SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck];
@@ -12,19 +13,32 @@ export default function Homepage() {
   const [cat, setCat] = useState(null);
   const searchInputRef = useRef(null);
 
+  const { data: services = [], isLoading, isError } = useServices();
+
   const suggestions = useMemo(() =>
     q.trim().length > 0
-      ? SERVICES.filter(s =>
-          s.name.toLowerCase().includes(q.toLowerCase()) || s.desc.toLowerCase().includes(q.toLowerCase())
+      ? services.filter(s =>
+          s.name.toLowerCase().includes(q.toLowerCase()) || s.description.toLowerCase().includes(q.toLowerCase())
         ).slice(0, 5)
       : [],
-    [q]);
+    [q, services]);
 
   const filtered = useMemo(() =>
-    SERVICES.filter(s =>
-      (!q || s.name.toLowerCase().includes(q.toLowerCase()) || s.desc.toLowerCase().includes(q.toLowerCase())) &&
-      (!cat || s.catId === cat)
-    ), [q, cat]);
+    services.filter(s =>
+      (!q || s.name.toLowerCase().includes(q.toLowerCase()) || s.description.toLowerCase().includes(q.toLowerCase())) &&
+      (!cat || s.department_id === cat)
+    ), [q, cat, services]);
+
+  const departmentGroups = useMemo(() => {
+    const map = new Map();
+    filtered.forEach(s => {
+      if (!map.has(s.department_id)) {
+        map.set(s.department_id, { id: s.department_id, name: s.department_name, services: [] });
+      }
+      map.get(s.department_id).services.push(s);
+    });
+    return Array.from(map.values());
+  }, [filtered]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,43 +103,37 @@ export default function Homepage() {
 
               {showSuggestions && suggestions.length > 0 && (
                 <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-border overflow-hidden z-50">
-                  {suggestions.map(s => {
-                    const dept = getDept(s.deptId);
-                    return (
-                      <button
-                        key={s.id}
-                        onMouseDown={() => navigate(`/services/${s.id}`)}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary text-left transition-colors border-b border-border/50 last:border-0"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
-                          <s.Icon size={16} className="text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-foreground">{s.name}</div>
-                          <div className="text-xs text-muted-foreground">{dept.shortName}</div>
-                        </div>
-                        <ChevronRight size={14} className="text-muted-foreground flex-shrink-0" />
-                      </button>
-                    );
-                  })}
+                  {suggestions.map(s => (
+                    <button
+                      key={s.id}
+                      onMouseDown={() => navigate(`/services/${s.slug}`)}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary text-left transition-colors border-b border-border/50 last:border-0"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
+                        <FileText size={16} className="text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-foreground">{s.name}</div>
+                        <div className="text-xs text-muted-foreground">{s.department_name}</div>
+                      </div>
+                      <ChevronRight size={14} className="text-muted-foreground flex-shrink-0" />
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2">
-              {QUICK_CHIPS.map(chip => {
-                const s = getSvc(chip.svcId);
-                return (
-                  <button
-                    key={chip.svcId}
-                    onClick={() => navigate(`/services/${s.id}`)}
-                    className="flex items-center gap-2 bg-white/12 backdrop-blur-sm border border-white/22 text-white rounded-full px-3.5 py-2 text-sm hover:bg-white/22 transition-colors"
-                  >
-                    <s.Icon size={14} />
-                    <span>{chip.label}</span>
-                  </button>
-                );
-              })}
+              {services.slice(0, 6).map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => navigate(`/services/${s.slug}`)}
+                  className="flex items-center gap-2 bg-white/12 backdrop-blur-sm border border-white/22 text-white rounded-full px-3.5 py-2 text-sm hover:bg-white/22 transition-colors"
+                >
+                  <FileText size={14} />
+                  <span>{s.name}</span>
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -245,76 +253,54 @@ export default function Homepage() {
           </p>
         )}
 
-        {/* Service grid grouped by category */}
-        {CATEGORIES.filter(c => !cat || c.id === cat).map(c => {
-          const catSvcs = filtered.filter(s => s.catId === c.id);
-          if (catSvcs.length === 0) return null;
-          return (
-            <section key={c.id} className="mb-10">
-              <h2 className="text-base font-semibold text-primary border-b border-border pb-2 mb-4" style={{ fontFamily: "var(--font-heading)" }}>
-                {c.label}
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {catSvcs.map(s => {
-                  const dept = getDept(s.deptId);
-                  const stats = SERVICE_STATS[s.id] ?? { queue: 6, next: "3:00 PM" };
-                  return (
-                    <div
-                      key={s.id}
-                      className="bg-card border border-border rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all"
-                    >
-                      <div className="flex items-start gap-3 mb-4">
-                        <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0">
-                          <s.Icon size={22} className="text-primary" strokeWidth={1.75} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <h3 className="font-bold text-foreground text-sm leading-snug">{s.name}</h3>
-                            <span className="text-[10px] bg-primary/8 text-primary rounded-full px-2 py-0.5 font-semibold flex-shrink-0 border border-primary/12">
-                              {dept.shortName}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">{s.desc}</p>
-                        </div>
-                      </div>
+        {/* Loading / error states */}
+        {isLoading && (
+          <div className="text-center py-20 text-muted-foreground text-sm">Loading services…</div>
+        )}
+        {isError && (
+          <div className="text-center py-20 text-destructive text-sm">
+            Couldn't load services. Please try again shortly.
+          </div>
+        )}
 
-                      <div className="grid grid-cols-3 gap-2 mb-4">
-                        <div className="bg-background rounded-xl px-2 py-2 text-center">
-                          <Clock size={12} className="text-muted-foreground mx-auto mb-1" />
-                          <div className="text-[10px] text-muted-foreground mb-0.5">Duration</div>
-                          <div className="font-semibold text-foreground text-[11px] leading-tight">{s.time}</div>
-                        </div>
-                        <div className="bg-background rounded-xl px-2 py-2 text-center">
-                          <Users size={12} className="text-muted-foreground mx-auto mb-1" />
-                          <div className="text-[10px] text-muted-foreground mb-0.5">Queue</div>
-                          <div className="font-semibold text-foreground text-[11px] leading-tight">{stats.queue} now</div>
-                        </div>
-                        <div className="bg-background rounded-xl px-2 py-2 text-center">
-                          <Calendar size={12} className="text-muted-foreground mx-auto mb-1" />
-                          <div className="text-[10px] text-muted-foreground mb-0.5">Next slot</div>
-                          <div className="font-semibold text-foreground text-[11px] leading-tight">{stats.next}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-1">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-2 h-2 rounded-full bg-green-500" />
-                          <span className="text-xs text-green-700 font-medium">Available Today</span>
-                        </div>
-                        <button
-                          onClick={() => navigate(`/services/${s.id}`)}
-                          className="text-sm bg-primary text-white rounded-xl px-4 py-2 font-semibold hover:bg-primary/90 transition-colors flex items-center gap-1.5"
-                        >
-                          Book <ArrowRight size={13} />
-                        </button>
-                      </div>
+        {/* Service grid grouped by department */}
+        {!isLoading && !isError && departmentGroups.map(dept => (
+          <section key={dept.id} className="mb-10">
+            <h2 className="text-base font-semibold text-primary border-b border-border pb-2 mb-4" style={{ fontFamily: "var(--font-heading)" }}>
+              {dept.name}
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {dept.services.map(s => (
+                <div
+                  key={s.id}
+                  className="bg-card border border-border rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all"
+                >
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0">
+                      <FileText size={22} className="text-primary" strokeWidth={1.75} />
                     </div>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-foreground text-sm leading-snug">{s.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">{s.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs text-muted-foreground">
+                      {s.fixed_fee > 0 ? `₱${s.fixed_fee}` : s.has_variable_fee ? "Variable fee" : "No fee"}
+                    </span>
+                    <button
+                      onClick={() => navigate(`/services/${s.slug}`)}
+                      className="text-sm bg-primary text-white rounded-xl px-4 py-2 font-semibold hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                    >
+                      View Details <ArrowRight size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
 
         {filtered.length === 0 && (
           <div className="text-center py-20">
