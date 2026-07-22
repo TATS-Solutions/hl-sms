@@ -10,6 +10,14 @@ import DynamicField from "../components/DynamicField";
 const MOBILE_REGEX = /^(09\d{9}|\+639\d{9})$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function to24Hour(slot) {
+  const [time, period] = slot.split(" ");
+  let [hours, minutes] = time.split(":").map(Number);
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
 export default function BookingFlow() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -76,7 +84,7 @@ export default function BookingFlow() {
         resident_email: email.trim(),
         booked_for_name: null,
         scheduled_date: selectedDate.toISOString().slice(0, 10),
-        scheduled_time: selectedSlot,
+        scheduled_time: to24Hour(selectedSlot),
         form_data: formData,
       });
       navigate(`/ticket/${response.data.meta.reference_code}`, {
