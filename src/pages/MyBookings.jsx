@@ -1,29 +1,37 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { findBooking, cancelBooking } from "../data/bookings";
-import StatusBadge from "../components/StatusBadge";
+import { lookupServiceRequest } from "../api/serviceRequests";
+import { getStatusInfo } from "../data/statusMap";
 
 export default function MyBookings() {
   const [reference, setReference] = useState("");
   const [mobile, setMobile] = useState("");
   const [booking, setBooking] = useState(null);
-  const [searched, setSearched] = useState(false);
+  const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    const found = findBooking(reference, mobile);
-    setBooking(found || null);
-    setSearched(true);
-    setError(found ? "" : "No booking found. Check your reference code and mobile number.");
+    setStatus("loading");
+    setError("");
+    setBooking(null);
+    try {
+      const response = await lookupServiceRequest(reference.trim(), mobile.trim());
+      setBooking(response.data.data);
+      setStatus("success");
+    } catch (err) {
+      if (err.response?.status === 429) {
+        setError("Too many lookup attempts. Please wait 1 minute.");
+      } else if (err.response?.status === 404) {
+        setError("No booking found. Check your reference code and mobile number.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+      setStatus("error");
+    }
   };
 
-  const handleCancel = () => {
-    cancelBooking(booking.reference);
-    setBooking({ ...booking, status: "cancelled" });
-  };
-
-  const date = booking ? new Date(booking.date) : null;
+  const statusInfo = booking ? getStatusInfo(booking.status) : null;
 
   return (
     <div className="max-w-md mx-auto px-4 py-10">
@@ -31,7 +39,7 @@ export default function MyBookings() {
         My Bookings
       </h1>
       <p className="text-muted-foreground text-sm mb-6">
-        Look up your appointment using your reference code and mobile number.
+        Look up your application using your reference code and mobile number.
       </p>
 
       <form onSubmit={handleSearch} className="space-y-4 mb-8">
@@ -43,8 +51,8 @@ export default function MyBookings() {
             type="text"
             value={reference}
             onChange={(e) => setReference(e.target.value)}
-            placeholder="HLG-DEMO1"
-            className="w-full bg-input-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            placeholder="HLG-20260721-AL0KMS"
+            className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
             style={{ fontFamily: "var(--font-mono)" }}
           />
         </div>
@@ -57,65 +65,89 @@ export default function MyBookings() {
             value={mobile}
             onChange={(e) => setMobile(e.target.value)}
             placeholder="09171234567"
-            className="w-full bg-input-background border border-border rounded px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
           />
         </div>
         <button
           type="submit"
-          disabled={!reference.trim() || !mobile.trim()}
-          className="w-full bg-primary text-white rounded py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          disabled={!reference.trim() || !mobile.trim() || status === "loading"}
+          className="w-full bg-primary text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <Search size={15} /> Find Booking
+          <Search size={15} /> {status === "loading" ? "Searching…" : "Find Booking"}
         </button>
       </form>
 
-      {searched && error && (
-        <p className="text-destructive text-sm text-center">{error}</p>
+      {status === "error" && (
+        <p className="text-destructive text-sm text-center mb-4">{error}</p>
       )}
 
       {booking && (
-        <div className="bg-card rounded border border-border overflow-hidden">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
           <div className="bg-primary px-5 py-4 flex items-start justify-between gap-2">
             <div>
               <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">
-                {booking.departmentName}
+                {booking.department_name}
               </div>
               <div className="text-white font-semibold text-sm" style={{ fontFamily: "var(--font-heading)" }}>
-                {booking.serviceName}
+                {booking.service_name}
               </div>
             </div>
-            <StatusBadge status={booking.status} />
+            <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold whitespace-nowrap ${statusInfo.color}`}>
+              {statusInfo.label}
+            </span>
           </div>
 
-          <div className="px-5 py-4 grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Date</div>
-              <div className="text-sm text-foreground">
-                {date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-              </div>
-            </div>
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Time</div>
-              <div className="text-sm text-foreground">{booking.slot}</div>
-            </div>
-            <div className="col-span-2">
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Reference</div>
-              <div className="text-sm text-primary" style={{ fontFamily: "var(--font-mono)" }}>
-                {booking.reference}
-              </div>
-            </div>
-          </div>
+          <div className="px-5 py-4">
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">{statusInfo.note}</p>
 
-          {booking.status === "upcoming" && (
-            <div className="px-5 pb-4">
-              <button
-                onClick={handleCancel}
-                className="w-full border border-destructive text-destructive rounded py-2 text-sm font-medium hover:bg-destructive/5 transition-colors"
-              >
-                Cancel Appointment
-              </button>
+            <div className="grid grid-cols-2 gap-4">
+              {booking.scheduled_date && (
+                <div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Date</div>
+                  <div className="text-sm text-foreground">
+                    {new Date(booking.scheduled_date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                  </div>
+                </div>
+              )}
+              {booking.scheduled_time && (
+                <div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Time</div>
+                  <div className="text-sm text-foreground">{booking.scheduled_time}</div>
+                </div>
+              )}
+              <div className="col-span-2">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Reference</div>
+                <div className="text-sm text-primary break-all" style={{ fontFamily: "var(--font-mono)" }}>
+                  {booking.reference_code}
+                </div>
+              </div>
             </div>
-          )}
+
+            {booking.order_of_payment && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+                  Fee Assessment
+                </div>
+                <div className="space-y-1.5">
+                  {booking.order_of_payment.items.map((item) => (
+                    <div key={item.fee_name} className="flex justify-between text-sm">
+                      <span className="text-foreground">{item.fee_name}</span>
+                      <span className="text-foreground">₱{item.amount.toFixed(2)}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm font-semibold pt-1.5 border-t border-border">
+                    <span>Total</span>
+                    <span>₱{booking.order_of_payment.total_amount.toFixed(2)}</span>
+                  </div>
+                </div>
+                {booking.status === "pending_payment" && (
+                  <button className="w-full mt-3 bg-accent text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-accent/90 transition-colors">
+                    Pay Now
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
