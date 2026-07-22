@@ -19,7 +19,7 @@ function App() {
       <div className={isHome ? "" : "pt-16"}>
         <Routes>
           <Route path="/" element={<Homepage />} />
-          <Route path="/services/:id" element={<ServiceDetail />} />
+          <Route path="/services/:slug" element={<ServiceDetail />} />
           <Route path="/book/:serviceId" element={<BookingFlow />} />
           <Route path="/ticket/:reference" element={<ClaimTicket />} />
           <Route path="/my-bookings" element={<MyBookings />} />
