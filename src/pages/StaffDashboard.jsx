@@ -1,9 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search } from "lucide-react";
+import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, PlayCircle, CheckCircle2, Ban, UserX, RotateCcw, Receipt } from "lucide-react";
 import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
 import { fetchServiceRequests, fetchServiceRequestStats, updateServiceRequestStatus } from "../api/staff";
 import { getStatusInfo } from "../data/statusMap";
+import FeeAssessmentModal from "../components/FeeAssessmentModal";
+
+const ASSESSABLE_STATUSES = ["pending", "pending_assessment"];
 
 const STATUS_TRANSITIONS = {
   pending: ["pending_assessment", "pending_payment", "processing", "cancelled", "no_show"],
@@ -13,6 +16,17 @@ const STATUS_TRANSITIONS = {
   completed: ["no_show"],
   cancelled: ["pending"],
   no_show: ["processing", "pending"],
+};
+
+// Icon + color per target status, used to render the Update column as one-click action buttons.
+const STATUS_ACTION_ICONS = {
+  pending: { Icon: RotateCcw, className: "text-yellow-700 hover:bg-yellow-50 border-yellow-200" },
+  pending_assessment: { Icon: ClipboardCheck, className: "text-orange-700 hover:bg-orange-50 border-orange-200" },
+  pending_payment: { Icon: CreditCard, className: "text-blue-700 hover:bg-blue-50 border-blue-200" },
+  processing: { Icon: PlayCircle, className: "text-purple-700 hover:bg-purple-50 border-purple-200" },
+  completed: { Icon: CheckCircle2, className: "text-green-700 hover:bg-green-50 border-green-200" },
+  cancelled: { Icon: Ban, className: "text-red-700 hover:bg-red-50 border-red-200" },
+  no_show: { Icon: UserX, className: "text-gray-700 hover:bg-gray-100 border-gray-300" },
 };
 
 export default function StaffDashboard() {
@@ -26,6 +40,11 @@ export default function StaffDashboard() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelError, setCancelError] = useState("");
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  const [assessTarget, setAssessTarget] = useState(null);
 
   const isGlobalRole = user?.role === "admin" || user?.role === "treasurer";
 
@@ -78,20 +97,42 @@ export default function StaffDashboard() {
     navigate("/staff/login");
   };
 
-  const handleStatusChange = async (request, newStatus) => {
-    let cancellation_reason;
-    if (newStatus === "cancelled") {
-      cancellation_reason = window.prompt("Reason for cancellation (required):");
-      if (!cancellation_reason || cancellation_reason.trim().length < 3) return;
-    }
+  const handleStatusChange = async (request, newStatus, cancellation_reason) => {
     try {
       await updateServiceRequestStatus(request.id, {
         status: newStatus,
-        ...(cancellation_reason ? { cancellation_reason: cancellation_reason.trim() } : {}),
+        ...(cancellation_reason ? { cancellation_reason } : {}),
       });
       loadData();
     } catch (err) {
       alert(err.response?.data?.message || "Couldn't update status.");
+    }
+  };
+
+  const openCancelModal = (request) => {
+    setCancelTarget(request);
+    setCancelReason("");
+    setCancelError("");
+  };
+
+  const closeCancelModal = () => {
+    setCancelTarget(null);
+    setCancelReason("");
+    setCancelError("");
+  };
+
+  const handleConfirmCancel = async () => {
+    const reason = cancelReason.trim();
+    if (reason.length < 3) {
+      setCancelError("Please enter a reason of at least 3 characters.");
+      return;
+    }
+    setCancelSubmitting(true);
+    try {
+      await handleStatusChange(cancelTarget, "cancelled", reason);
+      closeCancelModal();
+    } finally {
+      setCancelSubmitting(false);
     }
   };
 
@@ -222,8 +263,8 @@ export default function StaffDashboard() {
                       <div className="text-xs text-muted-foreground">{r.resident_phone}</div>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
-                      <div className="text-sm">{r.service_name}</div>
-                      <div className="text-xs text-muted-foreground">{r.department_name}</div>
+                      <div className="text-sm">{r.service?.name}</div>
+                      <div className="text-xs text-muted-foreground">{r.department?.name}</div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <div className="text-sm">
@@ -237,17 +278,35 @@ export default function StaffDashboard() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {nextOptions.length > 0 ? (
-                        <select
-                          value=""
-                          onChange={(e) => e.target.value && handleStatusChange(r, e.target.value)}
-                          className="text-xs border border-border rounded-lg px-2 py-1.5 bg-card focus:outline-none focus:ring-2 focus:ring-primary/40"
-                        >
-                          <option value="">Change status…</option>
-                          {nextOptions.map((s) => (
-                            <option key={s} value={s}>{getStatusInfo(s).label}</option>
-                          ))}
-                        </select>
+                      {(nextOptions.length > 0 || ASSESSABLE_STATUSES.includes(r.status)) ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {ASSESSABLE_STATUSES.includes(r.status) && (
+                            <button
+                              type="button"
+                              title="Assess Fees"
+                              aria-label="Assess Fees"
+                              onClick={() => setAssessTarget(r)}
+                              className="flex items-center justify-center w-7 h-7 rounded-lg border bg-card transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 text-primary hover:bg-primary/10 border-primary/40"
+                            >
+                              <Receipt size={14} />
+                            </button>
+                          )}
+                          {nextOptions.map((s) => {
+                            const { Icon, className } = STATUS_ACTION_ICONS[s] || {};
+                            return (
+                              <button
+                                key={s}
+                                type="button"
+                                title={getStatusInfo(s).label}
+                                aria-label={`Mark as ${getStatusInfo(s).label}`}
+                                onClick={() => (s === "cancelled" ? openCancelModal(r) : handleStatusChange(r, s))}
+                                className={`flex items-center justify-center w-7 h-7 rounded-lg border bg-card transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${className || "text-muted-foreground hover:bg-secondary/40 border-border"}`}
+                              >
+                                {Icon && <Icon size={14} />}
+                              </button>
+                            );
+                          })}
+                        </div>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
@@ -259,6 +318,66 @@ export default function StaffDashboard() {
           </table>
         </div>
       </div>
+
+      {cancelTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={closeCancelModal}
+        >
+          <div
+            className="bg-card rounded-2xl border border-border shadow-lg w-full max-w-sm p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-sm font-bold text-foreground mb-1">Cancel appointment</h2>
+            <p className="text-xs text-muted-foreground mb-3">
+              {cancelTarget.reference_code} · {cancelTarget.resident_name}
+            </p>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">
+              Reason for cancellation
+            </label>
+            <textarea
+              autoFocus
+              rows={3}
+              value={cancelReason}
+              onChange={(e) => {
+                setCancelReason(e.target.value);
+                if (cancelError) setCancelError("");
+              }}
+              placeholder="e.g. Resident requested reschedule"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+            />
+            {cancelError && (
+              <p className="text-xs text-destructive mt-1">{cancelError}</p>
+            )}
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                type="button"
+                onClick={closeCancelModal}
+                disabled={cancelSubmitting}
+                className="text-sm px-3 py-1.5 rounded-lg border border-border hover:bg-secondary/40 disabled:opacity-50"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCancel}
+                disabled={cancelSubmitting}
+                className="text-sm px-3 py-1.5 rounded-lg bg-destructive text-destructive-foreground hover:opacity-90 disabled:opacity-50"
+              >
+                {cancelSubmitting ? "Cancelling…" : "Confirm cancellation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {assessTarget && (
+        <FeeAssessmentModal
+          request={assessTarget}
+          onClose={() => setAssessTarget(null)}
+          onSuccess={loadData}
+        />
+      )}
     </div>
   );
 }
