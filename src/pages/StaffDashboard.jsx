@@ -1,69 +1,106 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, AlertCircle, Filter } from "lucide-react";
-import { isStaffAuthenticated, staffLogout } from "../data/staffAuth";
-import { getAllBookings, updateBookingStatus } from "../data/bookings";
-import { DEPARTMENTS, getDept, getSvc } from "../data/services";
+import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search } from "lucide-react";
+import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
+import { fetchServiceRequests, fetchServiceRequestStats, updateServiceRequestStatus } from "../api/staff";
 import { getStatusInfo } from "../data/statusMap";
 
-function todayStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+const STATUS_TRANSITIONS = {
+  pending: ["pending_assessment", "pending_payment", "processing", "cancelled", "no_show"],
+  pending_assessment: ["pending_payment", "cancelled"],
+  pending_payment: ["processing", "cancelled"],
+  processing: ["completed", "cancelled", "no_show"],
+  completed: ["no_show"],
+  cancelled: ["pending"],
+  no_show: ["processing", "pending"],
+};
 
 export default function StaffDashboard() {
   const navigate = useNavigate();
-  const [bookings, setBookings] = useState([]);
-  const [deptFilter, setDeptFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("today");
+  const [user, setUser] = useState(getStoredStaffUser());
+  const [requests, setRequests] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [deptFilter, setDeptFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const isGlobalRole = user?.role === "admin" || user?.role === "treasurer";
+
+  const buildParams = useCallback(() => {
+    const params = {};
+    if (isGlobalRole && deptFilter) params.department_id = deptFilter;
+    if (dateFilter) params.date = dateFilter;
+    if (statusFilter) params.status = statusFilter;
+    if (search.trim()) params.search = search.trim();
+    return params;
+  }, [isGlobalRole, deptFilter, dateFilter, statusFilter, search]);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const params = buildParams();
+      const [listRes, statsRes] = await Promise.all([
+        fetchServiceRequests(params),
+        fetchServiceRequestStats(params),
+      ]);
+      setRequests(listRes.data.data);
+      setStats(statsRes.data.data);
+    } catch (err) {
+      setError("Couldn't load dashboard data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, [buildParams]);
 
   useEffect(() => {
     if (!isStaffAuthenticated()) {
       navigate("/staff/login");
       return;
     }
-    setBookings(getAllBookings());
+    verifyStaffSession()
+      .then((freshUser) => setUser(freshUser))
+      .catch(() => {
+        staffLogout();
+        navigate("/staff/login");
+      });
   }, [navigate]);
 
-  const handleAction = (reference, status) => {
-    updateBookingStatus(reference, status);
-    setBookings(getAllBookings());
-  };
+  useEffect(() => {
+    if (user) loadData();
+  }, [user, loadData]);
 
-  const handleLogout = () => {
-    staffLogout();
+  const handleLogout = async () => {
+    await staffLogout();
     navigate("/staff/login");
   };
 
-  const today = todayStr();
-
-  const filtered = useMemo(() => {
-    let list = [...bookings];
-    if (deptFilter !== "all") list = list.filter((b) => b.deptId === deptFilter);
-    if (dateFilter === "today") {
-      list = list.filter((b) => b.date.slice(0, 10) === today);
-    } else if (dateFilter === "upcoming") {
-      list = list.filter((b) => b.date.slice(0, 10) >= today && b.status === "upcoming");
+  const handleStatusChange = async (request, newStatus) => {
+    let cancellation_reason;
+    if (newStatus === "cancelled") {
+      cancellation_reason = window.prompt("Reason for cancellation (required):");
+      if (!cancellation_reason || cancellation_reason.trim().length < 3) return;
     }
-    return list.sort((a, b) => new Date(a.date) - new Date(b.date));
-  }, [bookings, deptFilter, dateFilter, today]);
+    try {
+      await updateServiceRequestStatus(request.id, {
+        status: newStatus,
+        ...(cancellation_reason ? { cancellation_reason: cancellation_reason.trim() } : {}),
+      });
+      loadData();
+    } catch (err) {
+      alert(err.response?.data?.message || "Couldn't update status.");
+    }
+  };
 
-  const stats = useMemo(() => {
-    const todayBookings = bookings.filter((b) => b.date.slice(0, 10) === today);
-    return {
-      todayTotal: todayBookings.length,
-      todayDone: todayBookings.filter((b) => b.status === "done").length,
-      upcomingAll: bookings.filter((b) => b.date.slice(0, 10) >= today && b.status === "upcoming").length,
-      noShows: bookings.filter((b) => b.status === "no-show").length,
-    };
-  }, [bookings, today]);
-
-  const STAT_CARDS = [
-    { label: "Today's Appointments", value: stats.todayTotal, Icon: ClipboardList, color: "text-primary" },
-    { label: "All Upcoming", value: stats.upcomingAll, Icon: TrendingUp, color: "text-blue-600" },
-    { label: "Completed Today", value: stats.todayDone, Icon: CheckCircle, color: "text-green-600" },
-    { label: "No-shows", value: stats.noShows, Icon: XCircle, color: "text-amber-600" },
-  ];
+  const STAT_CARDS = stats ? [
+    { label: "Today's Appointments", value: stats.todays_appointments, Icon: ClipboardList, color: "text-primary" },
+    { label: "All Upcoming", value: stats.upcoming_appointments, Icon: TrendingUp, color: "text-blue-600" },
+    { label: "Completed Today", value: stats.completed_today, Icon: CheckCircle, color: "text-green-600" },
+    { label: "No-shows", value: stats.no_shows, Icon: XCircle, color: "text-amber-600" },
+  ] : [];
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -73,7 +110,7 @@ export default function StaffDashboard() {
             Appointments Dashboard
           </h1>
           <p className="text-sm text-muted-foreground">
-            Municipality of Hilongos · Staff View · {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            {user?.department?.name || "Municipality of Hilongos"} · {user?.name} · {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
           </p>
         </div>
         <button
@@ -84,56 +121,65 @@ export default function StaffDashboard() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        {STAT_CARDS.map((s) => (
-          <div key={s.label} className="bg-card border border-border rounded-xl p-4 shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">
-                {s.label}
-              </span>
-              <s.Icon size={16} className={s.color} />
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {STAT_CARDS.map((s) => (
+            <div key={s.label} className="bg-card border border-border rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">
+                  {s.label}
+                </span>
+                <s.Icon size={16} className={s.color} />
+              </div>
+              <div className="text-2xl font-bold text-foreground" style={{ fontFamily: "var(--font-mono)" }}>
+                {s.value}
+              </div>
             </div>
-            <div className="text-2xl font-bold text-foreground" style={{ fontFamily: "var(--font-mono)" }}>
-              {s.value}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5 text-xs text-amber-800 flex items-start gap-2">
-        <AlertCircle size={13} className="mt-px flex-shrink-0" />
-        <span>
-          <strong>Preview build:</strong> This dashboard runs on local demo data pending staff API endpoints — see BACKEND_HANDOFF_STAFF_NEEDS.md for what's needed. Department-specific staff accounts and role-based access control are planned for a later phase.
-        </span>
-      </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="flex items-center gap-2">
-          <Filter size={13} className="text-muted-foreground" />
-          <select
-            value={deptFilter}
-            onChange={(e) => setDeptFilter(e.target.value)}
-            className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-          >
-            <option value="all">All Departments</option>
-            {DEPARTMENTS.map((d) => (
-              <option key={d.id} value={d.id}>{d.shortName}</option>
-            ))}
-          </select>
+        <div className="relative">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search name or reference…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="bg-card border border-border rounded-lg pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
         </div>
-        <select
+        {isGlobalRole && (
+          <div className="flex items-center gap-2">
+            <Filter size={13} className="text-muted-foreground" />
+            <input
+              type="number"
+              placeholder="Department ID"
+              value={deptFilter}
+              onChange={(e) => setDeptFilter(e.target.value)}
+              className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
+        )}
+        <input
+          type="date"
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value)}
           className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
         >
-          <option value="today">
-            Today ({new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })})
-          </option>
-          <option value="upcoming">All Upcoming</option>
-          <option value="all">All Records</option>
+          <option value="">All Statuses</option>
+          {Object.keys(STATUS_TRANSITIONS).map((s) => (
+            <option key={s} value={s}>{getStatusInfo(s).label}</option>
+          ))}
         </select>
         <span className="ml-auto text-xs text-muted-foreground">
-          {filtered.length} record{filtered.length !== 1 ? "s" : ""}
+          {requests.length} record{requests.length !== 1 ? "s" : ""}
         </span>
       </div>
 
@@ -142,7 +188,7 @@ export default function StaffDashboard() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/40">
-                {["Reference", "Resident", "Service", "Date & Time", "Status", "Actions"].map((h, i) => (
+                {["Reference", "Resident", "Service", "Date & Time", "Status", "Update"].map((h, i) => (
                   <th
                     key={h}
                     className={`text-left px-4 py-3 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground ${
@@ -155,62 +201,53 @@ export default function StaffDashboard() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="text-center text-muted-foreground py-12 text-sm">
-                    No records match the current filter.
-                  </td>
-                </tr>
+              {loading && (
+                <tr><td colSpan={6} className="text-center text-muted-foreground py-12 text-sm">Loading…</td></tr>
               )}
-              {filtered.map((b) => {
-                const service = getSvc(b.serviceId);
-                const dept = getDept(b.deptId);
+              {!loading && error && (
+                <tr><td colSpan={6} className="text-center text-destructive py-12 text-sm">{error}</td></tr>
+              )}
+              {!loading && !error && requests.length === 0 && (
+                <tr><td colSpan={6} className="text-center text-muted-foreground py-12 text-sm">No records match the current filters.</td></tr>
+              )}
+              {!loading && !error && requests.map((r) => {
+                const nextOptions = STATUS_TRANSITIONS[r.status] || [];
                 return (
-                  <tr key={b.reference} className="border-b border-border/60 last:border-0 hover:bg-secondary/30 transition-colors">
+                  <tr key={r.id} className="border-b border-border/60 last:border-0 hover:bg-secondary/30 transition-colors">
                     <td className="px-4 py-3 text-xs text-primary font-semibold whitespace-nowrap" style={{ fontFamily: "var(--font-mono)" }}>
-                      {b.reference}
+                      {r.reference_code}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-medium text-sm">{b.fullName}</div>
-                      <div className="text-xs text-muted-foreground">{b.mobile}</div>
+                      <div className="font-medium text-sm">{r.resident_name}</div>
+                      <div className="text-xs text-muted-foreground">{r.resident_phone}</div>
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell">
-                      <div className="text-sm">{service.name}</div>
-                      <div className="text-xs text-muted-foreground">{dept.shortName}</div>
+                      <div className="text-sm">{r.service_name}</div>
+                      <div className="text-xs text-muted-foreground">{r.department_name}</div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       <div className="text-sm">
-                        {new Date(b.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                        {r.scheduled_date && new Date(r.scheduled_date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                       </div>
-                      <div className="text-xs text-muted-foreground">{b.slot}</div>
+                      <div className="text-xs text-muted-foreground">{r.scheduled_time}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold whitespace-nowrap ${getStatusInfo(b.status).color}`}>
-                        {getStatusInfo(b.status).label}
+                      <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold whitespace-nowrap ${getStatusInfo(r.status).color}`}>
+                        {getStatusInfo(r.status).label}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {["pending", "pending_assessment", "pending_payment", "processing"].includes(b.status) ? (
-                        <div className="flex gap-1.5 flex-wrap">
-                          <button
-                            onClick={() => handleAction(b.reference, "done")}
-                            className="text-xs px-2.5 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
-                          >
-                            Done
-                          </button>
-                          <button
-                            onClick={() => handleAction(b.reference, "no-show")}
-                            className="text-xs px-2.5 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
-                          >
-                            No-show
-                          </button>
-                          <button
-                            onClick={() => handleAction(b.reference, "cancelled")}
-                            className="text-xs px-2.5 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        </div>
+                      {nextOptions.length > 0 ? (
+                        <select
+                          value=""
+                          onChange={(e) => e.target.value && handleStatusChange(r, e.target.value)}
+                          className="text-xs border border-border rounded-lg px-2 py-1.5 bg-card focus:outline-none focus:ring-2 focus:ring-primary/40"
+                        >
+                          <option value="">Change status…</option>
+                          {nextOptions.map((s) => (
+                            <option key={s} value={s}>{getStatusInfo(s).label}</option>
+                          ))}
+                        </select>
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}

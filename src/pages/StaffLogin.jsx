@@ -9,12 +9,23 @@ export default function StaffLogin() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
-    const handleSubmit = (e) => {
+    const [submitting, setSubmitting] = useState(false);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (staffLogin(email, password)) {
+        setSubmitting(true);
+        setError("");
+        try {
+            await staffLogin(email, password);
             navigate("/staff/dashboard");
-        } else {
-            setError("Incorrect email or password.");
+        } catch (err) {
+            setError(
+                err.response?.status === 401 || err.response?.status === 422
+                    ? "Incorrect email or password."
+                    : "Something went wrong. Please try again."
+            );
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -66,11 +77,15 @@ export default function StaffLogin() {
 
                 <button
                     type="submit"
-                    disabled={!email.trim() || !password}
+                    disabled={!email.trim() || !password || submitting}
                     className="w-full bg-primary text-white rounded-xl py-3 text-sm font-semibold hover:bg-primary/90 transition-colors shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                    Sign In
+                    {submitting ? "Signing in…" : "Sign In"}
                 </button>
+
+                <p className="text-xs text-center text-muted-foreground">
+                    Demo: mho@hilongos.gov.ph / password123
+                </p>
 
                 <p className="text-xs text-center text-muted-foreground">
                     Demo: staff@hilongos.gov.ph / staff2026
