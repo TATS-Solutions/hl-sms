@@ -15,3 +15,6 @@ export const fetchServiceRequestStats = (params = {}) =>
 
 export const updateServiceRequestStatus = (id, payload) =>
   apiClient.patch(`/admin/service-requests/${id}/status`, payload);
+
+export const assessServiceRequestFees = (id, payload) =>
+  apiClient.post(`/admin/service-requests/${id}/assess`, payload);
