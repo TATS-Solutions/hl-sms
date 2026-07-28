@@ -13,7 +13,7 @@ const STATUS_TRANSITIONS = {
   pending_assessment: ["pending_payment", "cancelled"],
   pending_payment: ["processing", "cancelled"],
   processing: ["completed", "cancelled", "no_show"],
-  completed: ["no_show"],
+  completed: [],
   cancelled: ["pending"],
   no_show: ["processing", "pending"],
 };
