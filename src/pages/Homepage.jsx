@@ -6,6 +6,15 @@ import { useServices } from "../hooks/useServices";
 import hilongosLogo from "../assets/hilongos-logo.png";
 
 const STEP_ICONS = [SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck];
+
+// Maps a CATEGORIES_FULL id to a keyword found in the real department_name
+// returned by the API — there's no category concept on the backend, so
+// category pills filter by matching against each service's department name.
+const CATEGORY_DEPARTMENT_KEYWORDS = {
+  health: "Health Office",
+  social: "Social Welfare",
+};
+
 export default function Homepage() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
@@ -26,7 +35,7 @@ export default function Homepage() {
   const filtered = useMemo(() =>
     services.filter(s =>
       (!q || s.name.toLowerCase().includes(q.toLowerCase()) || s.description.toLowerCase().includes(q.toLowerCase())) &&
-      (!cat || s.department_id === cat)
+      (!cat || s.department_name?.includes(CATEGORY_DEPARTMENT_KEYWORDS[cat]))
     ), [q, cat, services]);
 
   const departmentGroups = useMemo(() => {
