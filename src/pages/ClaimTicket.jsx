@@ -3,6 +3,21 @@ import { Link2, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { getStatusInfo } from "../data/statusMap";
 
+function getSubmissionMessage(status, orderOfPayment) {
+  switch (status) {
+    case "pending_payment":
+      return orderOfPayment
+        ? `Fees have been assessed — please pay ₱${orderOfPayment.total_amount.toFixed(2)} at the Treasurer's Office to proceed.`
+        : "Fees have been assessed. Please pay at the Treasurer's Office to proceed.";
+    case "pending_assessment":
+      return "Your application is under staff review. We'll compute the required fees shortly.";
+    case "pending":
+      return "Your application has been received and is queued for processing.";
+    default:
+      return null;
+  }
+}
+
 export default function ClaimTicket() {
   const { reference } = useParams();
   const navigate = useNavigate();
@@ -27,6 +42,7 @@ export default function ClaimTicket() {
 
   const date = new Date(booking.date);
   const statusInfo = booking.status ? getStatusInfo(booking.status) : null;
+  const submissionMessage = getSubmissionMessage(booking.status, booking.orderOfPayment);
 
   const handleCopyLink = async () => {
     try {
@@ -81,7 +97,15 @@ export default function ClaimTicket() {
           </div>
         </div>
 
-        {booking.orderOfPayment && (
+        {submissionMessage && (
+          <div className="px-6 pb-5">
+            <p className="text-sm text-foreground bg-secondary/40 border border-border rounded-xl px-4 py-3">
+              {submissionMessage}
+            </p>
+          </div>
+        )}
+
+        {booking.status === "pending_payment" && booking.orderOfPayment && (
           <div className="px-6 pb-5">
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
               Fee Assessment
