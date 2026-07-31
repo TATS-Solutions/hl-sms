@@ -21,7 +21,7 @@ function getUpcomingWeekdays(count) {
   return dates;
 }
 
-export default function DateSlotPicker({ serviceId, selectedDate, selectedSlot, onSelectDate, onSelectSlot }) {
+export default function DateSlotPicker({ serviceId, selectedDate, selectedSlot, onSelectDate, onSelectSlot, refreshKey }) {
   const dates = getUpcomingWeekdays(10);
   const [bookedSlots, setBookedSlots] = useState([]);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
@@ -48,7 +48,7 @@ export default function DateSlotPicker({ serviceId, selectedDate, selectedSlot, 
     return () => {
       cancelled = true;
     };
-  }, [serviceId, selectedDate]);
+  }, [serviceId, selectedDate, refreshKey]);
 
   return (
     <div>

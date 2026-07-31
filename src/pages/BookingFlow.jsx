@@ -19,6 +19,8 @@ export default function BookingFlow() {
   const [step, setStep] = useState(2);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [availabilityRefreshKey, setAvailabilityRefreshKey] = useState(0);
+  const [slotError, setSlotError] = useState("");
   const [fullName, setFullName] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
@@ -93,9 +95,17 @@ export default function BookingFlow() {
         },
       });
     } catch (err) {
-      setSubmitError(
-        err.response?.data?.message || "Something went wrong submitting your application. Please try again."
-      );
+      const errors = err.response?.data?.errors;
+      if (errors?.scheduled_time) {
+        setSlotError("That slot was just taken — pick another time.");
+        setSelectedSlot(null);
+        setAvailabilityRefreshKey((key) => key + 1);
+        setStep(2);
+      } else {
+        setSubmitError(
+          errors ? Object.values(errors)[0][0] : err.response?.data?.message || "Something went wrong submitting your application. Please try again."
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -119,15 +129,21 @@ export default function BookingFlow() {
 
         {step === 2 && (
           <>
+            {slotError && <p className="text-destructive text-sm mb-4">{slotError}</p>}
             <DateSlotPicker
               serviceId={service.id}
               selectedDate={selectedDate}
               selectedSlot={selectedSlot}
+              refreshKey={availabilityRefreshKey}
               onSelectDate={(date) => {
                 setSelectedDate(date);
                 setSelectedSlot(null);
+                setSlotError("");
               }}
-              onSelectSlot={setSelectedSlot}
+              onSelectSlot={(slot) => {
+                setSelectedSlot(slot);
+                setSlotError("");
+              }}
             />
             <button
               disabled={!selectedDate || !selectedSlot}
