@@ -140,11 +140,6 @@ export default function MyBookings() {
                     <span>₱{booking.order_of_payment.total_amount.toFixed(2)}</span>
                   </div>
                 </div>
-                {booking.status === "pending_payment" && (
-                  <button className="w-full mt-3 bg-accent text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-accent/90 transition-colors">
-                    Pay Now
-                  </button>
-                )}
               </div>
             )}
           </div>

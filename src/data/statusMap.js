@@ -1,7 +1,7 @@
 export const STATUS_MAP = {
   pending: { label: "Pending Review", color: "bg-yellow-50 text-yellow-800 border-yellow-200", note: "Application received and queued for staff review." },
   pending_assessment: { label: "Pending Fee Assessment", color: "bg-orange-50 text-orange-800 border-orange-200", note: "Staff are reviewing your documents to compute required fees." },
-  pending_payment: { label: "Pending Payment", color: "bg-blue-50 text-blue-800 border-blue-200", note: "Fees assessed. Complete payment to proceed." },
+  pending_payment: { label: "Pending Payment", color: "bg-blue-50 text-blue-800 border-blue-200", note: "Fees assessed. Please proceed to the Municipal Treasurer's Office (Ground Floor, Municipal Hall) and present your Reference Code to pay." },
   processing: { label: "Processing", color: "bg-purple-50 text-purple-800 border-purple-200", note: "Payment verified. Office is preparing your document." },
   completed: { label: "Completed", color: "bg-green-50 text-green-800 border-green-200", note: "Service complete! Ready for download or pick-up at Municipal Hall." },
   cancelled: { label: "Cancelled", color: "bg-red-50 text-red-800 border-red-200", note: "This application was cancelled." },
