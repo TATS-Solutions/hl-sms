@@ -82,6 +82,7 @@ export default function BookingFlow() {
         scheduled_time: to24Hour(selectedSlot),
         form_data: formData,
       });
+      const submittedRequest = response.data.data;
       navigate(`/ticket/${response.data.meta.reference_code}`, {
         state: {
           referenceCode: response.data.meta.reference_code,
@@ -92,6 +93,8 @@ export default function BookingFlow() {
           residentPhone: mobile.trim(),
           date: selectedDate.toISOString(),
           slot: selectedSlot,
+          status: submittedRequest.status,
+          orderOfPayment: submittedRequest.order_of_payment,
         },
       });
     } catch (err) {
