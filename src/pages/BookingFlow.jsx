@@ -6,17 +6,10 @@ import { submitServiceRequest } from "../api/serviceRequests";
 import StepIndicator from "../components/StepIndicator";
 import DateSlotPicker from "../components/DateSlotPicker";
 import DynamicField from "../components/DynamicField";
+import { to24Hour } from "../utils/time";
 
 const MOBILE_REGEX = /^(09\d{9}|\+639\d{9})$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function to24Hour(slot) {
-  const [time, period] = slot.split(" ");
-  let [hours, minutes] = time.split(":").map(Number);
-  if (period === "PM" && hours !== 12) hours += 12;
-  if (period === "AM" && hours === 12) hours = 0;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-}
 
 export default function BookingFlow() {
   const { slug } = useParams();
@@ -127,6 +120,7 @@ export default function BookingFlow() {
         {step === 2 && (
           <>
             <DateSlotPicker
+              serviceId={service.id}
               selectedDate={selectedDate}
               selectedSlot={selectedSlot}
               onSelectDate={(date) => {
