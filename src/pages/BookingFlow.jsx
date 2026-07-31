@@ -29,6 +29,7 @@ export default function BookingFlow() {
   const [consentChecked, setConsentChecked] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [editingField, setEditingField] = useState(null);
 
   if (isLoading) {
     return <div className="max-w-2xl mx-auto px-4 py-16 text-center text-muted-foreground text-sm">Loading…</div>;
@@ -222,23 +223,109 @@ export default function BookingFlow() {
         {step === 4 && (
           <>
             <div className="space-y-4">
-              <SummaryRow label="Service" value={service.name} onEdit={() => setStep(2)} />
+              <SummaryRow label="Service" value={service.name} />
+
               <SummaryRow
                 label="Date & Time"
                 value={`${selectedDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })} · ${selectedSlot}`}
-                onEdit={() => setStep(2)}
               />
-              <SummaryRow label="Name" value={fullName} onEdit={() => setStep(3)} />
-              <SummaryRow label="Mobile Number" value={mobile} onEdit={() => setStep(3)} />
-              <SummaryRow label="Email" value={email} onEdit={() => setStep(3)} />
-              {service.form_schema.fields.map((field) => (
-                <SummaryRow
-                  key={field.name}
-                  label={field.label}
-                  value={formData[field.name] || "—"}
-                  onEdit={() => setStep(3)}
-                />
-              ))}
+
+              {editingField === "fullName" ? (
+                <EditSection label="Name" onDone={() => setEditingField(null)}>
+                  <input
+                    type="text"
+                    autoFocus
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Juan Dela Cruz"
+                    className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                </EditSection>
+              ) : (
+                <SummaryRow label="Name" value={fullName} onEdit={() => setEditingField("fullName")} />
+              )}
+
+              {editingField === "mobile" ? (
+                <EditSection
+                  label="Mobile Number"
+                  onDone={() => {
+                    if (!MOBILE_REGEX.test(mobile.trim())) {
+                      setFieldErrors((prev) => ({ ...prev, mobile: "Enter a valid PH mobile number (e.g. 09171234567)" }));
+                      return;
+                    }
+                    setFieldErrors((prev) => ({ ...prev, mobile: undefined }));
+                    setEditingField(null);
+                  }}
+                >
+                  <input
+                    type="tel"
+                    autoFocus
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    placeholder="09171234567"
+                    className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  {fieldErrors.mobile && <p className="text-destructive text-xs mt-1.5">{fieldErrors.mobile}</p>}
+                </EditSection>
+              ) : (
+                <SummaryRow label="Mobile Number" value={mobile} onEdit={() => setEditingField("mobile")} />
+              )}
+
+              {editingField === "email" ? (
+                <EditSection
+                  label="Email Address"
+                  onDone={() => {
+                    if (!EMAIL_REGEX.test(email.trim())) {
+                      setFieldErrors((prev) => ({ ...prev, email: "Enter a valid email address" }));
+                      return;
+                    }
+                    setFieldErrors((prev) => ({ ...prev, email: undefined }));
+                    setEditingField(null);
+                  }}
+                >
+                  <input
+                    type="email"
+                    autoFocus
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="juan@example.com"
+                    className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  {fieldErrors.email && <p className="text-destructive text-xs mt-1.5">{fieldErrors.email}</p>}
+                </EditSection>
+              ) : (
+                <SummaryRow label="Email" value={email} onEdit={() => setEditingField("email")} />
+              )}
+
+              {service.form_schema.fields.map((field) =>
+                editingField === field.name ? (
+                  <EditSection
+                    key={field.name}
+                    onDone={() => {
+                      if (field.validation?.required && !formData[field.name]) {
+                        setFieldErrors((prev) => ({ ...prev, [field.name]: "This field is required" }));
+                        return;
+                      }
+                      setFieldErrors((prev) => ({ ...prev, [field.name]: undefined }));
+                      setEditingField(null);
+                    }}
+                  >
+                    <DynamicField
+                      field={field}
+                      value={formData[field.name]}
+                      onChange={(val) => setFormData((prev) => ({ ...prev, [field.name]: val }))}
+                      error={fieldErrors[field.name]}
+                    />
+                  </EditSection>
+                ) : (
+                  <SummaryRow
+                    key={field.name}
+                    label={field.label}
+                    value={formData[field.name] || "—"}
+                    onEdit={() => setEditingField(field.name)}
+                  />
+                )
+              )}
             </div>
 
             <label className="flex items-start gap-2.5 mt-6 cursor-pointer">
@@ -259,7 +346,8 @@ export default function BookingFlow() {
 
             <button
               onClick={handleConfirm}
-              disabled={!consentChecked || submitting}
+              disabled={!consentChecked || submitting || !!editingField}
+              title={editingField ? "Finish editing before submitting" : undefined}
               className="w-full mt-4 bg-accent text-white rounded-xl py-3 font-semibold hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {submitting ? "Submitting…" : "Confirm & Submit"}
@@ -278,8 +366,29 @@ function SummaryRow({ label, value, onEdit }) {
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">{label}</div>
         <div className="text-sm text-foreground">{value}</div>
       </div>
-      <button onClick={onEdit} className="text-accent hover:opacity-70 flex-shrink-0 mt-0.5">
-        <Pencil size={13} />
+      {onEdit && (
+        <button onClick={onEdit} className="text-accent hover:opacity-70 flex-shrink-0 mt-0.5">
+          <Pencil size={13} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function EditSection({ label, onDone, doneDisabled, children }) {
+  return (
+    <div className="border-b border-border pb-4">
+      {label && (
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">{label}</div>
+      )}
+      {children}
+      <button
+        type="button"
+        onClick={onDone}
+        disabled={doneDisabled}
+        className="mt-3 text-sm bg-primary text-white rounded-xl px-4 py-2 font-semibold hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        Done
       </button>
     </div>
   );
