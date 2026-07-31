@@ -33,15 +33,17 @@ export default function DateSlotPicker({ serviceId, selectedDate, selectedSlot, 
     }
     let cancelled = false;
     setLoadingAvailability(true);
+    setBookedSlots([]);
     fetchServiceAvailability(serviceId, selectedDate.toISOString().slice(0, 10))
       .then((res) => {
-        if (!cancelled) setBookedSlots(res.data.data.booked_slots);
+        if (cancelled) return;
+        setBookedSlots(res.data.data.booked_slots);
+        setLoadingAvailability(false);
       })
       .catch(() => {
-        if (!cancelled) setBookedSlots([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingAvailability(false);
+        if (cancelled) return;
+        setBookedSlots([]);
+        setLoadingAvailability(false);
       });
     return () => {
       cancelled = true;
@@ -92,13 +94,17 @@ export default function DateSlotPicker({ serviceId, selectedDate, selectedSlot, 
                   onClick={() => onSelectSlot(slot)}
                   disabled={isBooked || loadingAvailability}
                   title={isBooked ? "This slot is already booked" : undefined}
-                  className={`rounded border py-2 text-sm transition-colors ${
+                  className={`rounded border py-2 text-sm ${
                     isBooked
                       ? "bg-secondary/40 border-border text-muted-foreground line-through cursor-not-allowed opacity-60"
-                      : selectedSlot === slot
-                      ? "bg-primary border-primary text-white"
-                      : "bg-card border-border hover:border-primary/40"
-                  } ${loadingAvailability && !isBooked ? "opacity-60 cursor-wait" : ""}`}
+                      : `transition-colors ${
+                          loadingAvailability
+                            ? "opacity-60 cursor-wait bg-card border-border"
+                            : selectedSlot === slot
+                            ? "bg-primary border-primary text-white"
+                            : "bg-card border-border hover:border-primary/40"
+                        }`
+                  }`}
                 >
                   {slot}
                 </button>
