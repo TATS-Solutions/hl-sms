@@ -46,6 +46,9 @@ export default function ServiceDetail() {
     ? "Variable — assessed by staff"
     : "No fee";
 
+  const mandatoryRequirements = service.requirements.filter((req) => req.is_mandatory);
+  const allMandatoryChecked = mandatoryRequirements.every((req) => checkedReqs[req.id]);
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <button
@@ -131,10 +134,17 @@ export default function ServiceDetail() {
 
       <button
         onClick={() => navigate(`/book/${service.slug}`)}
-        className="w-full bg-primary text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-md"
+        disabled={!allMandatoryChecked}
+        title={!allMandatoryChecked ? "Check off all required items marked with * before continuing" : undefined}
+        className="w-full bg-primary text-white rounded-xl py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-md disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-primary"
       >
         Continue to Application <ArrowRight size={16} />
       </button>
+      {!allMandatoryChecked && (
+        <p className="text-xs text-destructive text-center mt-2">
+          Check off all required items above before continuing.
+        </p>
+      )}
 
       <PrerequisiteModal requirement={activePrereq} onClose={() => setActivePrereq(null)} />
     </div>
