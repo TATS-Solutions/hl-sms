@@ -1,6 +1,7 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Link2, Copy, Check } from "lucide-react";
 import { useState } from "react";
+import { getStatusInfo } from "../data/statusMap";
 
 export default function ClaimTicket() {
   const { reference } = useParams();
@@ -25,6 +26,7 @@ export default function ClaimTicket() {
   }
 
   const date = new Date(booking.date);
+  const statusInfo = booking.status ? getStatusInfo(booking.status) : null;
 
   const handleCopyLink = async () => {
     try {
@@ -46,13 +48,20 @@ export default function ClaimTicket() {
       </div>
 
       <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-lg">
-        <div className="bg-primary px-6 py-5">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">
-            {booking.departmentName}
+        <div className="bg-primary px-6 py-5 flex items-start justify-between gap-2">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">
+              {booking.departmentName}
+            </div>
+            <div className="text-lg text-white font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
+              {booking.serviceName}
+            </div>
           </div>
-          <div className="text-lg text-white font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
-            {booking.serviceName}
-          </div>
+          {statusInfo && (
+            <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold whitespace-nowrap ${statusInfo.color}`}>
+              {statusInfo.label}
+            </span>
+          )}
         </div>
 
         <div className="px-6 py-5 grid grid-cols-2 gap-4">
@@ -71,6 +80,26 @@ export default function ClaimTicket() {
             <div className="text-sm text-foreground">{booking.residentName}</div>
           </div>
         </div>
+
+        {booking.orderOfPayment && (
+          <div className="px-6 pb-5">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+              Fee Assessment
+            </div>
+            <div className="space-y-1.5">
+              {booking.orderOfPayment.items.map((item) => (
+                <div key={item.fee_name} className="flex justify-between text-sm">
+                  <span className="text-foreground">{item.fee_name}</span>
+                  <span className="text-foreground">₱{item.amount.toFixed(2)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-sm font-semibold pt-1.5 border-t border-border">
+                <span>Total</span>
+                <span>₱{booking.orderOfPayment.total_amount.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Perforation */}
         <div className="relative flex items-center">
