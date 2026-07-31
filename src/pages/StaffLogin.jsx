@@ -84,7 +84,7 @@ export default function StaffLogin() {
                 </button>
 
                 <p className="text-xs text-center text-muted-foreground">
-                    Demo: mswdo@hilongos.gov.ph / password123
+                    Demo: admin@hilongos.gov.ph / password123
                 </p>
 
             </form>
