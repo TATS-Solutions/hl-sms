@@ -54,8 +54,8 @@ export default function Homepage() {
       {/* Hero */}
       <section className="relative min-h-[88vh] flex items-center bg-primary">
         <img
-          src="https://commons.wikimedia.org/wiki/Special:FilePath/Church_of_Hilongos,_Leyte.jpg?width=1600"
-          alt="Church of Hilongos, Leyte, with its bell tower"
+          src="https://images.unsplash.com/photo-1755344166932-ae7b6d99376d?w=1600&h=900&fit=crop&auto=format"
+          alt="Hilongos Municipal Hall"
           className="absolute inset-0 w-full h-full object-cover opacity-25"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/65 to-primary/90" />
@@ -223,14 +223,20 @@ export default function Homepage() {
             {CATEGORIES_FULL.map(c => (
               <button
                 key={c.id}
-                onClick={() => setCat(cat === c.id ? null : c.id)}
+                onClick={() => c.active && setCat(cat === c.id ? null : c.id)}
+                disabled={!c.active}
+                title={!c.active ? "Coming in a future phase" : undefined}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-medium transition-all ${
-                  cat === c.id
+                  !c.active
+                    ? "border-border text-muted-foreground/40 cursor-not-allowed"
+                    : cat === c.id
                     ? "bg-primary text-white border-primary shadow-md"
                     : "bg-background border-border text-foreground hover:border-primary/50 hover:shadow-sm"
                 }`}
               >
-                <c.Icon size={16} strokeWidth={1.75} /><span>{c.label}</span>
+                <c.Icon size={16} strokeWidth={1.75} />
+                <span>{c.label}</span>
+                {!c.active && <span className="text-[9px] uppercase tracking-wide ml-0.5 opacity-50">Soon</span>}
               </button>
             ))}
           </div>
