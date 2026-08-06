@@ -34,9 +34,8 @@ export default function Homepage() {
 
   const filtered = useMemo(() =>
     services.filter(s =>
-      (!q || s.name.toLowerCase().includes(q.toLowerCase()) || s.description.toLowerCase().includes(q.toLowerCase())) &&
-      (!cat || s.department_name?.includes(CATEGORY_DEPARTMENT_KEYWORDS[cat]))
-    ), [q, cat, services]);
+      !cat || s.department_name?.includes(CATEGORY_DEPARTMENT_KEYWORDS[cat])
+    ), [cat, services]);
 
   const departmentGroups = useMemo(() => {
     const map = new Map();
@@ -85,7 +84,7 @@ export default function Homepage() {
               />
               <input
                 ref={searchInputRef}
-                type="search"
+                type="text"
                 placeholder='Search services — try "prenatal", "indigency", "medical"'
                 value={q}
                 onChange={e => {
@@ -94,6 +93,12 @@ export default function Homepage() {
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 180)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && q.trim()) {
+                    setShowSuggestions(false);
+                    navigate(`/search?q=${encodeURIComponent(q.trim())}`);
+                  }
+                }}
                 className="w-full bg-white text-foreground placeholder-muted-foreground rounded-2xl pl-12 pr-12 py-4 text-base shadow-2xl focus:outline-none focus:ring-2 focus:ring-accent/50"
                 aria-label="Search services"
               />
@@ -128,6 +133,12 @@ export default function Homepage() {
                       <ChevronRight size={14} className="text-muted-foreground flex-shrink-0" />
                     </button>
                   ))}
+                  <button
+                    onMouseDown={() => navigate(`/search?q=${encodeURIComponent(q.trim())}`)}
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-medium text-accent hover:bg-secondary transition-colors"
+                  >
+                    View all results for "{q.trim()}" <ArrowRight size={13} />
+                  </button>
                 </div>
               )}
             </div>
@@ -255,13 +266,6 @@ export default function Homepage() {
           </div>
         )}
 
-        {q && (
-          <p className="text-sm text-muted-foreground mb-5">
-            {filtered.length} result{filtered.length !== 1 ? "s" : ""} for "{q}"
-            <button onClick={() => setQ("")} className="ml-2 text-accent hover:underline text-sm">Clear</button>
-          </p>
-        )}
-
         {/* Loading / error states */}
         {isLoading && (
           <div className="text-center py-20 text-muted-foreground text-sm">Loading services…</div>
@@ -314,7 +318,7 @@ export default function Homepage() {
         {filtered.length === 0 && (
           <div className="text-center py-20">
             <Search size={36} className="text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">No services found. Try a different keyword.</p>
+            <p className="text-muted-foreground text-sm">No services found in this category.</p>
           </div>
         )}
       </main>
