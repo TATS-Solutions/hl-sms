@@ -1,10 +1,12 @@
 function scoreServiceForToken(service, token) {
   const nameWords = service.name.toLowerCase().split(/\s+/);
   const descWords = (service.description || "").toLowerCase().split(/\s+/);
+  const deptWords = (service.department_name || "").toLowerCase().split(/\s+/);
 
   if (nameWords.includes(token)) return 3;
   if (nameWords.some((w) => w.startsWith(token))) return 2;
   if (descWords.some((w) => w.includes(token))) return 1;
+  if (deptWords.some((w) => w.includes(token))) return 1;
   return 0;
 }
 
