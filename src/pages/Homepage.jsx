@@ -9,12 +9,11 @@ import hilongosLogo from "../assets/hilongos-logo.png";
 
 const STEP_ICONS = [SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck];
 
-// Maps a CATEGORIES_FULL id to a keyword found in the real department_name
-// returned by the API — there's no category concept on the backend, so
-// category pills filter by matching against each service's department name.
-const CATEGORY_DEPARTMENT_KEYWORDS = {
-  health: "Health Office",
-  social: "Social Welfare",
+// Maps a CATEGORIES_FULL id to the real backend department_id — there's no
+// category concept on the backend, so category pills filter by department.
+const CATEGORY_DEPARTMENT_ID = {
+  health: 1,
+  social: 2,
 };
 
 export default function Homepage() {
@@ -29,10 +28,15 @@ export default function Homepage() {
 
   const suggestions = useMemo(() => matchServices(services, debouncedQ).slice(0, 5), [debouncedQ, services]);
 
-  const filtered = useMemo(() =>
-    services.filter(s =>
-      !cat || s.department_name?.includes(CATEGORY_DEPARTMENT_KEYWORDS[cat])
-    ), [cat, services]);
+  const filtered = useMemo(() => {
+    if (!cat) return services;
+    const deptId = CATEGORY_DEPARTMENT_ID[cat];
+    const matches = services.filter(s => s.department_id === deptId);
+    if (matches.length === 0 && services.length > 0) {
+      console.warn(`Category "${cat}" (department_id ${deptId}) matched no services — check CATEGORY_DEPARTMENT_ID against the backend's department list.`);
+    }
+    return matches;
+  }, [cat, services]);
 
   const departmentGroups = useMemo(() => {
     const map = new Map();
