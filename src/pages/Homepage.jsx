@@ -3,6 +3,7 @@ import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCir
 import { useNavigate } from "react-router-dom";
 import { CATEGORIES_FULL, HOW_STEPS } from "../data/services";
 import { useServices } from "../hooks/useServices";
+import { matchServices } from "../utils/search";
 import hilongosLogo from "../assets/hilongos-logo.png";
 
 const STEP_ICONS = [SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck];
@@ -24,13 +25,7 @@ export default function Homepage() {
 
   const { data: services = [], isLoading, isError } = useServices();
 
-  const suggestions = useMemo(() =>
-    q.trim().length > 0
-      ? services.filter(s =>
-          s.name.toLowerCase().includes(q.toLowerCase()) || s.description.toLowerCase().includes(q.toLowerCase())
-        ).slice(0, 5)
-      : [],
-    [q, services]);
+  const suggestions = useMemo(() => matchServices(services, q).slice(0, 5), [q, services]);
 
   const filtered = useMemo(() =>
     services.filter(s =>

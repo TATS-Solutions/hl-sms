@@ -3,6 +3,7 @@ import { Search, X, ArrowRight, FileText, ArrowLeft, SearchX } from "lucide-reac
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useServices } from "../hooks/useServices";
 import { QUICK_CHIPS } from "../data/services";
+import { matchServices } from "../utils/search";
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -16,13 +17,7 @@ export default function SearchPage() {
     inputRef.current?.focus();
   }, []);
 
-  const filtered = useMemo(() =>
-    q.trim().length > 0
-      ? services.filter(s =>
-          s.name.toLowerCase().includes(q.toLowerCase()) || s.description.toLowerCase().includes(q.toLowerCase())
-        )
-      : [],
-    [q, services]);
+  const filtered = useMemo(() => matchServices(services, q), [q, services]);
 
   const departmentGroups = useMemo(() => {
     const map = new Map();
