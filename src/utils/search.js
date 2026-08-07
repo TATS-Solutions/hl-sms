@@ -1,3 +1,11 @@
+function toWords(text) {
+  return (text || "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]+/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
 function scoreTokenAgainstWords(nameWords, descWords, deptWords, token) {
   if (nameWords.includes(token)) return 3;
   if (nameWords.some((w) => w.startsWith(token))) return 2;
@@ -7,14 +15,14 @@ function scoreTokenAgainstWords(nameWords, descWords, deptWords, token) {
 }
 
 export function matchServices(services, query) {
-  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const tokens = toWords(query);
   if (tokens.length === 0) return [];
 
   const scored = [];
   services.forEach((service, index) => {
-    const nameWords = service.name.toLowerCase().split(/\s+/);
-    const descWords = (service.description || "").toLowerCase().split(/\s+/);
-    const deptWords = (service.department_name || "").toLowerCase().split(/\s+/);
+    const nameWords = toWords(service.name);
+    const descWords = toWords(service.description);
+    const deptWords = toWords(service.department_name);
 
     let total = 0;
     for (const token of tokens) {
