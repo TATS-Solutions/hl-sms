@@ -1,4 +1,4 @@
-import { Activity, Heart, Baby, FlaskConical, Pill, HeartHandshake, FileText, Banknote, HeartPulse, Users, ScrollText, Briefcase, Landmark, Leaf, Wrench, TreePine, ShieldCheck, GraduationCap } from "lucide-react";
+import { Activity, Heart, Baby, FlaskConical, Pill, HeartHandshake, FileText, Banknote, HeartPulse, Users, ScrollText, Briefcase, Landmark, Leaf, Wrench, Building2, Calculator, Gavel } from "lucide-react";
 
 export const DEPARTMENTS = [
   { id: "mho", name: "Municipal Health Office", shortName: "MHO" },
@@ -54,17 +54,20 @@ export const HOW_STEPS = [
   { n: "05", label: "Complete Service" },
 ];
 
+// Ids match the backend's real department_id (see /departments).
 export const CATEGORIES_FULL = [
-  { id: "health", label: "Health", Icon: HeartPulse, active: true },
-  { id: "social", label: "Social Services", Icon: Users, active: true },
-  { id: "civil", label: "Civil Registry", Icon: ScrollText, active: false },
-  { id: "biz", label: "Business", Icon: Briefcase, active: false },
-  { id: "treasury", label: "Treasury", Icon: Landmark, active: false },
-  { id: "agri", label: "Agriculture", Icon: Leaf, active: false },
-  { id: "eng", label: "Engineering", Icon: Wrench, active: false },
-  { id: "env", label: "Environment", Icon: TreePine, active: false },
-  { id: "safety", label: "Public Safety", Icon: ShieldCheck, active: false },
-  { id: "edu", label: "Education", Icon: GraduationCap, active: false },
+  { id: 1, label: "Health", Icon: HeartPulse },
+  { id: 2, label: "Social Services", Icon: Users },
+  { id: 3, label: "Civil Registry", Icon: ScrollText },
+  { id: 4, label: "Planning & Development", Icon: Building2 },
+  { id: 5, label: "Engineering", Icon: Wrench },
+  { id: 6, label: "Mayor's Office", Icon: Landmark },
+  { id: 7, label: "Agriculture", Icon: Leaf },
+  { id: 8, label: "Assessor", Icon: Calculator },
+  { id: 9, label: "Treasury", Icon: Banknote },
+  { id: 10, label: "Sangguniang Bayan", Icon: Gavel },
+  { id: 11, label: "SB Secretary", Icon: FileText },
+  { id: 12, label: "Employment Services", Icon: Briefcase },
 ];
 
 export const SERVICE_STATS = {

@@ -9,13 +9,6 @@ import hilongosLogo from "../assets/hilongos-logo.png";
 
 const STEP_ICONS = [SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck];
 
-// Maps a CATEGORIES_FULL id to the real backend department_id — there's no
-// category concept on the backend, so category pills filter by department.
-const CATEGORY_DEPARTMENT_ID = {
-  health: 1,
-  social: 2,
-};
-
 export default function Homepage() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
@@ -31,10 +24,9 @@ export default function Homepage() {
 
   const filtered = useMemo(() => {
     if (!cat) return services;
-    const deptId = CATEGORY_DEPARTMENT_ID[cat];
-    const matches = services.filter(s => s.department_id === deptId);
+    const matches = services.filter(s => s.department_id === cat);
     if (matches.length === 0 && services.length > 0) {
-      console.warn(`Category "${cat}" (department_id ${deptId}) matched no services — check CATEGORY_DEPARTMENT_ID against the backend's department list.`);
+      console.warn(`Office id ${cat} matched no services — check CATEGORIES_FULL against the backend's department list.`);
     }
     return matches;
   }, [cat, services]);
@@ -282,29 +274,24 @@ export default function Homepage() {
       <section className="bg-card py-12 px-4 border-y border-border">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl font-bold text-primary mb-2 text-center" style={{ fontFamily: "var(--font-heading)" }}>
-            Browse by Category
+            Browse by Office
           </h2>
           <p className="text-sm text-muted-foreground text-center mb-6">
-            Explore every service by department — separate from the search box above.
+            Explore every service by office — separate from the search box above.
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             {CATEGORIES_FULL.map(c => (
               <button
                 key={c.id}
-                onClick={() => c.active && setCat(cat === c.id ? null : c.id)}
-                disabled={!c.active}
-                title={!c.active ? "Coming in a future phase" : undefined}
+                onClick={() => setCat(cat === c.id ? null : c.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-medium transition-all ${
-                  !c.active
-                    ? "border-border text-muted-foreground/40 cursor-not-allowed"
-                    : cat === c.id
+                  cat === c.id
                     ? "bg-primary text-white border-primary shadow-md"
                     : "bg-background border-border text-foreground hover:border-primary/50 hover:shadow-sm"
                 }`}
               >
                 <c.Icon size={16} strokeWidth={1.75} />
                 <span>{c.label}</span>
-                {!c.active && <span className="text-[9px] uppercase tracking-wide ml-0.5 opacity-50">Soon</span>}
               </button>
             ))}
           </div>
@@ -332,7 +319,7 @@ export default function Homepage() {
               onClick={() => setCat(null)}
               className="text-sm text-accent hover:underline flex items-center gap-1"
             >
-              <X size={13} /> Clear category filter
+              <X size={13} /> Clear office filter
             </button>
           </div>
         )}
@@ -389,7 +376,7 @@ export default function Homepage() {
         {filtered.length === 0 && (
           <div className="text-center py-20">
             <Search size={36} className="text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">No services found in this category.</p>
+            <p className="text-muted-foreground text-sm">No services found for this office.</p>
           </div>
         )}
       </main>
