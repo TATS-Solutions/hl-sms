@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, PlayCircle, CheckCircle2, Ban, UserX, RotateCcw, Receipt } from "lucide-react";
 import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { fetchServiceRequests, fetchServiceRequestStats, updateServiceRequestStatus } from "../api/staff";
 import { getStatusInfo } from "../data/statusMap";
 import FeeAssessmentModal from "../components/FeeAssessmentModal";
@@ -48,14 +49,17 @@ export default function StaffDashboard() {
 
   const isGlobalRole = user?.role === "admin" || user?.role === "treasurer";
 
+  const debouncedSearch = useDebouncedValue(search, 350);
+  const debouncedDeptFilter = useDebouncedValue(deptFilter, 350);
+
   const buildParams = useCallback(() => {
     const params = {};
-    if (isGlobalRole && deptFilter) params.department_id = deptFilter;
+    if (isGlobalRole && debouncedDeptFilter) params.department_id = debouncedDeptFilter;
     if (dateFilter) params.date = dateFilter;
     if (statusFilter) params.status = statusFilter;
-    if (search.trim()) params.search = search.trim();
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
     return params;
-  }, [isGlobalRole, deptFilter, dateFilter, statusFilter, search]);
+  }, [isGlobalRole, debouncedDeptFilter, dateFilter, statusFilter, debouncedSearch]);
 
   const loadData = useCallback(async () => {
     setLoading(true);

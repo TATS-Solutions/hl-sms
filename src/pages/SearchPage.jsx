@@ -2,6 +2,7 @@ import { useMemo, useRef, useEffect } from "react";
 import { Search, X, ArrowRight, FileText, ArrowLeft, SearchX } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useServices } from "../hooks/useServices";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { QUICK_CHIPS } from "../data/services";
 import { matchServices } from "../utils/search";
 
@@ -9,6 +10,7 @@ export default function SearchPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const q = searchParams.get("q") || "";
+  const debouncedQ = useDebouncedValue(q, 300);
   const inputRef = useRef(null);
 
   const { data: services = [], isLoading, isError } = useServices();
@@ -17,7 +19,7 @@ export default function SearchPage() {
     inputRef.current?.focus();
   }, []);
 
-  const filtered = useMemo(() => matchServices(services, q), [q, services]);
+  const filtered = useMemo(() => matchServices(services, debouncedQ), [debouncedQ, services]);
 
   const departmentGroups = useMemo(() => {
     const map = new Map();
@@ -31,7 +33,7 @@ export default function SearchPage() {
   }, [filtered]);
 
   const runSearch = (value) => {
-    setSearchParams(value.trim() ? { q: value } : {});
+    setSearchParams(value.trim() ? { q: value } : {}, { replace: true });
   };
 
   const hasQuery = q.trim().length > 0;

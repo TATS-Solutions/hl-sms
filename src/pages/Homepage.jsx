@@ -3,6 +3,7 @@ import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCir
 import { useNavigate } from "react-router-dom";
 import { CATEGORIES_FULL, HOW_STEPS } from "../data/services";
 import { useServices } from "../hooks/useServices";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { matchServices } from "../utils/search";
 import hilongosLogo from "../assets/hilongos-logo.png";
 
@@ -24,8 +25,9 @@ export default function Homepage() {
   const searchInputRef = useRef(null);
 
   const { data: services = [], isLoading, isError } = useServices();
+  const debouncedQ = useDebouncedValue(q, 300);
 
-  const suggestions = useMemo(() => matchServices(services, q).slice(0, 5), [q, services]);
+  const suggestions = useMemo(() => matchServices(services, debouncedQ).slice(0, 5), [debouncedQ, services]);
 
   const filtered = useMemo(() =>
     services.filter(s =>
