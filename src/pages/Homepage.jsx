@@ -224,9 +224,12 @@ export default function Homepage() {
       {/* Category Pills */}
       <section className="bg-card py-12 px-4 border-y border-border">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl font-bold text-primary mb-6 text-center" style={{ fontFamily: "var(--font-heading)" }}>
+          <h2 className="text-xl font-bold text-primary mb-2 text-center" style={{ fontFamily: "var(--font-heading)" }}>
             Browse by Category
           </h2>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Explore every service by department — separate from the search box above.
+          </p>
           <div className="flex flex-wrap justify-center gap-2">
             {CATEGORIES_FULL.map(c => (
               <button
@@ -252,6 +255,20 @@ export default function Homepage() {
       </section>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
+        {q.trim() && (
+          <div className="flex items-center justify-between gap-3 mb-6 bg-secondary/60 border border-border rounded-xl px-4 py-3">
+            <p className="text-sm text-muted-foreground">
+              The list below shows every service, not results for <span className="font-medium text-foreground">"{q.trim()}"</span>.
+            </p>
+            <button
+              onClick={() => navigate(`/search?q=${encodeURIComponent(q.trim())}`)}
+              className="text-sm font-semibold text-accent hover:underline whitespace-nowrap flex items-center gap-1"
+            >
+              Search now <ArrowRight size={13} />
+            </button>
+          </div>
+        )}
+
         {(cat) && (
           <div className="flex items-center gap-2 mb-6">
             <button
