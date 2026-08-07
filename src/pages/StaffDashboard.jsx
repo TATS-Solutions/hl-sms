@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, PlayCircle, CheckCircle2, Ban, UserX, RotateCcw, Receipt } from "lucide-react";
 import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
@@ -51,6 +51,7 @@ export default function StaffDashboard() {
 
   const debouncedSearch = useDebouncedValue(search, 350);
   const debouncedDeptFilter = useDebouncedValue(deptFilter, 350);
+  const requestIdRef = useRef(0);
 
   const buildParams = useCallback(() => {
     const params = {};
@@ -62,6 +63,7 @@ export default function StaffDashboard() {
   }, [isGlobalRole, debouncedDeptFilter, dateFilter, statusFilter, debouncedSearch]);
 
   const loadData = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError("");
     try {
@@ -70,12 +72,14 @@ export default function StaffDashboard() {
         fetchServiceRequests(params),
         fetchServiceRequestStats(params),
       ]);
+      if (requestIdRef.current !== requestId) return;
       setRequests(listRes.data.data);
       setStats(statsRes.data.data);
     } catch (err) {
+      if (requestIdRef.current !== requestId) return;
       setError("Couldn't load dashboard data. Please try again.");
     } finally {
-      setLoading(false);
+      if (requestIdRef.current === requestId) setLoading(false);
     }
   }, [buildParams]);
 
