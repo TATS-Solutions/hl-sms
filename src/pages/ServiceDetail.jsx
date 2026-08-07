@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Building2, FileText, CheckSquare, Square } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, FileText, CheckSquare, Square, Truck } from "lucide-react";
 import { useServiceDetail } from "../hooks/useServiceDetail";
 import StepIndicator from "../components/StepIndicator";
 import PrerequisiteModal from "../components/PrerequisiteModal";
@@ -97,6 +97,13 @@ export default function ServiceDetail() {
               </p>
             </div>
           </div>
+
+          {service.is_deliver && (
+            <div className="flex items-center gap-2 text-accent bg-accent/10 rounded-lg px-3 py-2 text-sm">
+              <Truck size={15} className="flex-shrink-0" />
+              <span>This service supports delivery in addition to in-person processing.</span>
+            </div>
+          )}
 
           {service.requirements.length > 0 && (
             <div>

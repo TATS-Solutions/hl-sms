@@ -1,5 +1,5 @@
 import { useMemo, useRef, useEffect } from "react";
-import { Search, X, ArrowRight, FileText, ArrowLeft, SearchX } from "lucide-react";
+import { Search, X, ArrowRight, FileText, ArrowLeft, SearchX, Truck } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useServices } from "../hooks/useServices";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -162,13 +162,20 @@ export default function SearchPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs text-muted-foreground bg-secondary rounded-full px-2.5 py-1">
-                      {s.fixed_fee > 0 ? `₱${s.fixed_fee}` : s.has_variable_fee ? "Variable fee" : "No fee"}
-                    </span>
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <span className="text-xs text-muted-foreground bg-secondary rounded-full px-2.5 py-1">
+                        {s.fixed_fee > 0 ? `₱${s.fixed_fee}` : s.has_variable_fee ? "Variable fee" : "No fee"}
+                      </span>
+                      {s.is_deliver && (
+                        <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 rounded-full px-2.5 py-1 whitespace-nowrap">
+                          <Truck size={11} /> Delivery available
+                        </span>
+                      )}
+                    </div>
                     <button
                       onClick={() => navigate(`/services/${s.slug}`)}
-                      className="text-sm bg-primary text-white rounded-xl px-4 py-2 font-semibold hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                      className="text-sm bg-primary text-white rounded-xl px-4 py-2 font-semibold hover:bg-primary/90 transition-colors flex items-center gap-1.5 flex-shrink-0"
                     >
                       View Details <ArrowRight size={13} />
                     </button>

@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight, Users, Phone, Mail, FileText } from "lucide-react";
+import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight, Users, Phone, Mail, FileText, Truck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CATEGORIES_FULL, HOW_STEPS } from "../data/services";
 import { useServices } from "../hooks/useServices";
@@ -356,13 +356,20 @@ export default function Homepage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs text-muted-foreground">
-                      {s.fixed_fee > 0 ? `₱${s.fixed_fee}` : s.has_variable_fee ? "Variable fee" : "No fee"}
-                    </span>
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <span className="text-xs text-muted-foreground">
+                        {s.fixed_fee > 0 ? `₱${s.fixed_fee}` : s.has_variable_fee ? "Variable fee" : "No fee"}
+                      </span>
+                      {s.is_deliver && (
+                        <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 rounded-full px-2 py-0.5 whitespace-nowrap">
+                          <Truck size={11} /> Delivery available
+                        </span>
+                      )}
+                    </div>
                     <button
                       onClick={() => navigate(`/services/${s.slug}`)}
-                      className="text-sm bg-primary text-white rounded-xl px-4 py-2 font-semibold hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                      className="text-sm bg-primary text-white rounded-xl px-4 py-2 font-semibold hover:bg-primary/90 transition-colors flex items-center gap-1.5 flex-shrink-0"
                     >
                       View Details <ArrowRight size={13} />
                     </button>
