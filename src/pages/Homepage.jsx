@@ -47,8 +47,8 @@ export default function Homepage() {
       {/* Hero */}
       <section className="relative min-h-[88vh] flex items-center bg-primary">
         <img
-          src="https://images.unsplash.com/photo-1755344166932-ae7b6d99376d?w=1600&h=900&fit=crop&auto=format"
-          alt="Hilongos Municipal Hall"
+          src="https://commons.wikimedia.org/wiki/Special:FilePath/Church_of_Hilongos,_Leyte.jpg?width=1600"
+          alt="Church of Hilongos, Leyte, with its bell tower"
           className="absolute inset-0 w-full h-full object-cover opacity-25"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/65 to-primary/90" />
