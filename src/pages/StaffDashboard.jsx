@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, PlayCircle, CheckCircle2, Ban, UserX, RotateCcw, Receipt } from "lucide-react";
+import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, PlayCircle, CheckCircle2, Ban, UserX, RotateCcw, Receipt, X } from "lucide-react";
 import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDepartments } from "../hooks/useDepartments";
@@ -105,6 +105,15 @@ export default function StaffDashboard() {
   const handleLogout = async () => {
     await staffLogout();
     navigate("/staff/login");
+  };
+
+  const hasActiveFilters = Boolean(search || deptFilter || dateFilter || statusFilter);
+
+  const clearFilters = () => {
+    setSearch("");
+    setDeptFilter("");
+    setDateFilter("");
+    setStatusFilter("");
   };
 
   const handleStatusChange = async (request, newStatus, cancellation_reason) => {
@@ -232,6 +241,15 @@ export default function StaffDashboard() {
             <option key={s} value={s}>{getStatusInfo(s).label}</option>
           ))}
         </select>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X size={12} /> Clear filters
+          </button>
+        )}
         <span className="ml-auto text-xs text-muted-foreground">
           {requests.length} record{requests.length !== 1 ? "s" : ""}
         </span>
