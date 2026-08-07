@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Pencil } from "lucide-react";
+import { ArrowLeft, ArrowRight, Pencil, Truck, MapPin } from "lucide-react";
 import { useServiceDetail } from "../hooks/useServiceDetail";
 import { submitServiceRequest } from "../api/serviceRequests";
 import StepIndicator from "../components/StepIndicator";
@@ -24,6 +24,8 @@ export default function BookingFlow() {
   const [fullName, setFullName] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
+  const [wantsDelivery, setWantsDelivery] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [formData, setFormData] = useState({});
   const [fieldErrors, setFieldErrors] = useState({});
   const [consentChecked, setConsentChecked] = useState(false);
@@ -59,6 +61,9 @@ export default function BookingFlow() {
     if (!EMAIL_REGEX.test(email.trim())) {
       errors.email = "Enter a valid email address";
     }
+    if (service.is_deliver && wantsDelivery && !deliveryAddress.trim()) {
+      errors.deliveryAddress = "Enter your delivery address";
+    }
     service.form_schema.fields.forEach((field) => {
       if (field.validation?.required && !formData[field.name]) {
         errors[field.name] = "This field is required";
@@ -81,7 +86,9 @@ export default function BookingFlow() {
         booked_for_name: null,
         scheduled_date: selectedDate.toISOString().slice(0, 10),
         scheduled_time: to24Hour(selectedSlot),
-        form_data: formData,
+        form_data: service.is_deliver
+          ? { ...formData, wants_delivery: wantsDelivery, delivery_address: wantsDelivery ? deliveryAddress.trim() : null }
+          : formData,
       });
       const submittedRequest = response.data.data;
       navigate(`/ticket/${response.data.meta.reference_code}`, {
@@ -210,6 +217,60 @@ export default function BookingFlow() {
                   error={fieldErrors[field.name]}
                 />
               ))}
+
+              {service.is_deliver && (
+                <div className="border-t border-border pt-4">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <Truck size={12} /> Delivery
+                  </label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    This service can be delivered to you instead of picking it up in person.
+                  </p>
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setWantsDelivery(true)}
+                      className={`flex-1 text-sm rounded-xl px-4 py-2.5 font-medium border transition-colors ${
+                        wantsDelivery
+                          ? "bg-accent text-white border-accent"
+                          : "bg-background border-border text-foreground hover:border-accent/50"
+                      }`}
+                    >
+                      Yes, deliver to me
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWantsDelivery(false);
+                        setDeliveryAddress("");
+                        setFieldErrors((prev) => ({ ...prev, deliveryAddress: undefined }));
+                      }}
+                      className={`flex-1 text-sm rounded-xl px-4 py-2.5 font-medium border transition-colors ${
+                        !wantsDelivery
+                          ? "bg-accent text-white border-accent"
+                          : "bg-background border-border text-foreground hover:border-accent/50"
+                      }`}
+                    >
+                      No, I'll pick it up
+                    </button>
+                  </div>
+                  {wantsDelivery && (
+                    <div>
+                      <label className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5 flex items-center gap-1">
+                        <MapPin size={11} /> Delivery Address <span className="text-destructive">*</span>
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={deliveryAddress}
+                        onChange={(e) => setDeliveryAddress(e.target.value)}
+                        placeholder="House/Unit No., Street, Barangay, Hilongos, Leyte"
+                        className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+                      />
+                      {fieldErrors.deliveryAddress && <p className="text-destructive text-xs mt-1.5">{fieldErrors.deliveryAddress}</p>}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <button
               onClick={handleDetailsSubmit}
@@ -323,6 +384,69 @@ export default function BookingFlow() {
                     label={field.label}
                     value={formData[field.name] || "—"}
                     onEdit={() => setEditingField(field.name)}
+                  />
+                )
+              )}
+
+              {service.is_deliver && (
+                editingField === "delivery" ? (
+                  <EditSection
+                    label="Delivery"
+                    onDone={() => {
+                      if (wantsDelivery && !deliveryAddress.trim()) {
+                        setFieldErrors((prev) => ({ ...prev, deliveryAddress: "Enter your delivery address" }));
+                        return;
+                      }
+                      setFieldErrors((prev) => ({ ...prev, deliveryAddress: undefined }));
+                      setEditingField(null);
+                    }}
+                  >
+                    <div className="flex gap-2 mb-3">
+                      <button
+                        type="button"
+                        onClick={() => setWantsDelivery(true)}
+                        className={`flex-1 text-sm rounded-xl px-4 py-2.5 font-medium border transition-colors ${
+                          wantsDelivery
+                            ? "bg-accent text-white border-accent"
+                            : "bg-background border-border text-foreground hover:border-accent/50"
+                        }`}
+                      >
+                        Yes, deliver to me
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setWantsDelivery(false);
+                          setDeliveryAddress("");
+                        }}
+                        className={`flex-1 text-sm rounded-xl px-4 py-2.5 font-medium border transition-colors ${
+                          !wantsDelivery
+                            ? "bg-accent text-white border-accent"
+                            : "bg-background border-border text-foreground hover:border-accent/50"
+                        }`}
+                      >
+                        No, I'll pick it up
+                      </button>
+                    </div>
+                    {wantsDelivery && (
+                      <>
+                        <textarea
+                          rows={2}
+                          autoFocus
+                          value={deliveryAddress}
+                          onChange={(e) => setDeliveryAddress(e.target.value)}
+                          placeholder="House/Unit No., Street, Barangay, Hilongos, Leyte"
+                          className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+                        />
+                        {fieldErrors.deliveryAddress && <p className="text-destructive text-xs mt-1.5">{fieldErrors.deliveryAddress}</p>}
+                      </>
+                    )}
+                  </EditSection>
+                ) : (
+                  <SummaryRow
+                    label="Delivery"
+                    value={wantsDelivery ? deliveryAddress : "Pick up in person"}
+                    onEdit={() => setEditingField("delivery")}
                   />
                 )
               )}
