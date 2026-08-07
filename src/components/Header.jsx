@@ -20,10 +20,10 @@ export default function Header() {
 
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+            className={`fixed top-0 left-0 right-0 z-50 border-b transition-all duration-300 ${
                 solid
-                    ? "bg-white/95 backdrop-blur shadow-sm border-b border-border"
-                    : "bg-transparent"
+                    ? "bg-white/95 backdrop-blur shadow-sm border-border"
+                    : "bg-transparent border-transparent"
             }`}
         >
             <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
