@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, PlayCircle, CheckCircle2, Ban, UserX, RotateCcw, Receipt } from "lucide-react";
 import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useDepartments } from "../hooks/useDepartments";
 import { fetchServiceRequests, fetchServiceRequestStats, updateServiceRequestStatus } from "../api/staff";
 import { getStatusInfo } from "../data/statusMap";
 import FeeAssessmentModal from "../components/FeeAssessmentModal";
@@ -48,6 +49,7 @@ export default function StaffDashboard() {
   const [assessTarget, setAssessTarget] = useState(null);
 
   const isGlobalRole = user?.role === "admin" || user?.role === "treasurer";
+  const { data: departments = [] } = useDepartments({ enabled: isGlobalRole });
 
   const debouncedSearch = useDebouncedValue(search, 350);
   const debouncedDeptFilter = useDebouncedValue(deptFilter, 350);
@@ -202,13 +204,16 @@ export default function StaffDashboard() {
         {isGlobalRole && (
           <div className="flex items-center gap-2">
             <Filter size={13} className="text-muted-foreground" />
-            <input
-              type="number"
-              placeholder="Department ID"
+            <select
               value={deptFilter}
               onChange={(e) => setDeptFilter(e.target.value)}
-              className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
+              className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            >
+              <option value="">All Departments</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>{d.name}</option>
+              ))}
+            </select>
           </div>
         )}
         <input

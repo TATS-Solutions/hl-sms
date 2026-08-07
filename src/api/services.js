@@ -5,3 +5,6 @@ export const fetchServices = (params = {}) =>
 
 export const fetchServiceBySlug = (slug) =>
   apiClient.get(`/services/${slug}`);
+
+export const fetchDepartments = () =>
+  apiClient.get("/departments");
