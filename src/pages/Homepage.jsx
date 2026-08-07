@@ -79,7 +79,18 @@ export default function Homepage() {
               Book appointments, submit applications, and access municipal services from one unified portal.
             </p>
 
-            <div className="relative">
+            <div
+              className="relative"
+              onBlur={e => {
+                // Closes on focus leaving the whole search box (input, clear button, or a
+                // suggestion), not just the input — so clicking a suggestion (which briefly
+                // shifts focus off the input) doesn't hide the dropdown before its click fires.
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                  setShowSuggestions(false);
+                  setActiveIndex(-1);
+                }
+              }}
+            >
               <Search
                 size={18}
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40 pointer-events-none z-10"
@@ -95,7 +106,6 @@ export default function Homepage() {
                   setActiveIndex(-1);
                 }}
                 onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => { setShowSuggestions(false); setActiveIndex(-1); }, 180)}
                 onKeyDown={e => {
                   const hasDropdown = showSuggestions && suggestions.length > 0;
                   const itemCount = suggestions.length + 1; // suggestions + "view all"
