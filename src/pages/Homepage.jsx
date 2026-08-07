@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight, Users, Phone, Mail, FileText, Truck } from "lucide-react";
+import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight, Users, Phone, Mail, FileText, Truck, Banknote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CATEGORIES_FULL, HOW_STEPS } from "../data/services";
 import { useServices } from "../hooks/useServices";
@@ -358,7 +358,8 @@ export default function Homepage() {
 
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <div className="flex items-center gap-2 flex-wrap min-w-0">
-                      <span className="text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1 text-xs text-green-800 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                        <Banknote size={11} />
                         {s.fixed_fee > 0 ? `₱${s.fixed_fee}` : s.has_variable_fee ? "Variable fee" : "No fee"}
                       </span>
                       {s.is_deliver && (
