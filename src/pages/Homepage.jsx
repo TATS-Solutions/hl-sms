@@ -20,6 +20,7 @@ export default function Homepage() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [cat, setCat] = useState(null);
   const searchInputRef = useRef(null);
 
@@ -91,17 +92,43 @@ export default function Homepage() {
                 onChange={e => {
                   setQ(e.target.value);
                   setShowSuggestions(true);
+                  setActiveIndex(-1);
                 }}
                 onFocus={() => setShowSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 180)}
+                onBlur={() => setTimeout(() => { setShowSuggestions(false); setActiveIndex(-1); }, 180)}
                 onKeyDown={e => {
-                  if (e.key === "Enter" && q.trim()) {
+                  const hasDropdown = showSuggestions && suggestions.length > 0;
+                  const itemCount = suggestions.length + 1; // suggestions + "view all"
+
+                  if (e.key === "ArrowDown") {
+                    if (!hasDropdown) return;
+                    e.preventDefault();
+                    setActiveIndex(i => (i + 1) % itemCount);
+                  } else if (e.key === "ArrowUp") {
+                    if (!hasDropdown) return;
+                    e.preventDefault();
+                    setActiveIndex(i => (i - 1 + itemCount) % itemCount);
+                  } else if (e.key === "Escape") {
                     setShowSuggestions(false);
-                    navigate(`/search?q=${encodeURIComponent(q.trim())}`);
+                    setActiveIndex(-1);
+                  } else if (e.key === "Enter") {
+                    if (!q.trim()) return;
+                    if (hasDropdown && activeIndex >= 0 && activeIndex < suggestions.length) {
+                      setShowSuggestions(false);
+                      navigate(`/services/${suggestions[activeIndex].slug}`);
+                    } else {
+                      setShowSuggestions(false);
+                      navigate(`/search?q=${encodeURIComponent(q.trim())}`);
+                    }
                   }
                 }}
                 className="w-full bg-white text-foreground placeholder-muted-foreground rounded-2xl pl-12 pr-12 py-4 text-base shadow-2xl focus:outline-none focus:ring-2 focus:ring-accent/50"
                 aria-label="Search services"
+                role="combobox"
+                aria-expanded={showSuggestions && suggestions.length > 0}
+                aria-controls="homepage-search-suggestions"
+                aria-autocomplete="list"
+                aria-activedescendant={activeIndex >= 0 ? `suggestion-option-${activeIndex}` : undefined}
               />
               {q && (
                 <button
@@ -117,12 +144,22 @@ export default function Homepage() {
               )}
 
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-border overflow-hidden z-50">
-                  {suggestions.map(s => (
+                <div
+                  id="homepage-search-suggestions"
+                  role="listbox"
+                  className="absolute top-full mt-2 w-full bg-white rounded-2xl shadow-2xl border border-border overflow-hidden z-50"
+                >
+                  {suggestions.map((s, i) => (
                     <button
                       key={s.id}
+                      id={`suggestion-option-${i}`}
+                      role="option"
+                      aria-selected={activeIndex === i}
                       onMouseDown={() => navigate(`/services/${s.slug}`)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary text-left transition-colors border-b border-border/50 last:border-0"
+                      onMouseEnter={() => setActiveIndex(i)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-border/50 last:border-0 ${
+                        activeIndex === i ? "bg-secondary" : "hover:bg-secondary"
+                      }`}
                     >
                       <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
                         <FileText size={16} className="text-primary" />
@@ -135,8 +172,14 @@ export default function Homepage() {
                     </button>
                   ))}
                   <button
+                    id={`suggestion-option-${suggestions.length}`}
+                    role="option"
+                    aria-selected={activeIndex === suggestions.length}
                     onMouseDown={() => navigate(`/search?q=${encodeURIComponent(q.trim())}`)}
-                    className="w-full flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-medium text-accent hover:bg-secondary transition-colors"
+                    onMouseEnter={() => setActiveIndex(suggestions.length)}
+                    className={`w-full flex items-center justify-center gap-1.5 px-4 py-3 text-sm font-medium text-accent transition-colors ${
+                      activeIndex === suggestions.length ? "bg-secondary" : "hover:bg-secondary"
+                    }`}
                   >
                     View all results for "{q.trim()}" <ArrowRight size={13} />
                   </button>
