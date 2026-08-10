@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, PlayCircle, CheckCircle2, Ban, UserX, RotateCcw, Receipt, X } from "lucide-react";
+import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, PlayCircle, CheckCircle2, Ban, UserX, RotateCcw, Receipt, X, Eye } from "lucide-react";
 import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDepartments } from "../hooks/useDepartments";
@@ -283,7 +283,11 @@ export default function StaffDashboard() {
                 <tr><td colSpan={6} className="text-center text-muted-foreground py-12 text-sm">No records match the current filters.</td></tr>
               )}
               {!loading && !error && requests.map((r) => {
-                const nextOptions = STATUS_TRANSITIONS[r.status] || [];
+                const receiptStatus = r.order_of_payment?.payment_receipt_status;
+                const receiptSubmitted = receiptStatus === "submitted" || receiptStatus === "verified";
+                const nextOptions = (STATUS_TRANSITIONS[r.status] || []).filter(
+                  (s) => !(r.status === "pending_payment" && s === "processing" && !receiptSubmitted)
+                );
                 return (
                   <tr key={r.id} className="border-b border-border/60 last:border-0 hover:bg-secondary/30 transition-colors">
                     <td className="px-4 py-3 text-xs text-primary font-semibold whitespace-nowrap" style={{ fontFamily: "var(--font-mono)" }}>
@@ -309,8 +313,20 @@ export default function StaffDashboard() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {(nextOptions.length > 0 || ASSESSABLE_STATUSES.includes(r.status)) ? (
+                      {(nextOptions.length > 0 || ASSESSABLE_STATUSES.includes(r.status) || receiptStatus === "submitted") ? (
                         <div className="flex flex-wrap gap-1.5">
+                          {receiptStatus === "submitted" && r.order_of_payment?.payment_receipt_url && (
+                            <a
+                              href={r.order_of_payment.payment_receipt_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="View Receipt"
+                              aria-label="View uploaded receipt"
+                              className="flex items-center justify-center w-7 h-7 rounded-lg border bg-card transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 text-primary hover:bg-primary/10 border-primary/40"
+                            >
+                              <Eye size={14} />
+                            </a>
+                          )}
                           {ASSESSABLE_STATUSES.includes(r.status) && (
                             <button
                               type="button"
@@ -324,11 +340,12 @@ export default function StaffDashboard() {
                           )}
                           {nextOptions.map((s) => {
                             const { Icon, className } = STATUS_ACTION_ICONS[s] || {};
+                            const isVerifyPayment = r.status === "pending_payment" && s === "processing";
                             return (
                               <button
                                 key={s}
                                 type="button"
-                                title={getStatusInfo(s).label}
+                                title={isVerifyPayment ? "Verify Payment" : getStatusInfo(s).label}
                                 aria-label={`Mark as ${getStatusInfo(s).label}`}
                                 onClick={() => (s === "cancelled" ? openCancelModal(r) : handleStatusChange(r, s))}
                                 className={`flex items-center justify-center w-7 h-7 rounded-lg border bg-card transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${className || "text-muted-foreground hover:bg-secondary/40 border-border"}`}
