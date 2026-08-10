@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { lookupServiceRequest } from "../api/serviceRequests";
 import { getStatusInfo } from "../data/statusMap";
+import PaymentUpload from "../components/PaymentUpload";
 
 export default function MyBookings() {
   const [reference, setReference] = useState("");
@@ -143,6 +144,20 @@ export default function MyBookings() {
               </div>
             )}
           </div>
+
+          {booking.status === "pending_payment" && booking.order_of_payment && (
+            <PaymentUpload
+              referenceCode={booking.reference_code}
+              residentPhone={mobile.trim()}
+              orderOfPayment={booking.order_of_payment}
+              onUploaded={() =>
+                setBooking((prev) => ({
+                  ...prev,
+                  order_of_payment: { ...prev.order_of_payment, payment_receipt_status: "submitted" },
+                }))
+              }
+            />
+          )}
         </div>
       )}
     </div>

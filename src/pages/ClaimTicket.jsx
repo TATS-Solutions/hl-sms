@@ -2,6 +2,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Link2, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { getStatusInfo } from "../data/statusMap";
+import PaymentUpload from "../components/PaymentUpload";
 
 function getSubmissionMessage(status, orderOfPayment) {
   switch (status) {
@@ -23,6 +24,7 @@ export default function ClaimTicket() {
   const navigate = useNavigate();
   const location = useLocation();
   const [copied, setCopied] = useState(false);
+  const [receiptStatus, setReceiptStatus] = useState(null);
 
   const booking = location.state;
 
@@ -43,6 +45,9 @@ export default function ClaimTicket() {
   const date = new Date(booking.date);
   const statusInfo = booking.status ? getStatusInfo(booking.status) : null;
   const submissionMessage = getSubmissionMessage(booking.status, booking.orderOfPayment);
+  const orderOfPayment = booking.orderOfPayment
+    ? { ...booking.orderOfPayment, payment_receipt_status: receiptStatus ?? booking.orderOfPayment.payment_receipt_status }
+    : null;
 
   const handleCopyLink = async () => {
     try {
@@ -105,24 +110,33 @@ export default function ClaimTicket() {
           </div>
         )}
 
-        {booking.status === "pending_payment" && booking.orderOfPayment && (
-          <div className="px-6 pb-5">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-              Fee Assessment
-            </div>
-            <div className="space-y-1.5">
-              {booking.orderOfPayment.items.map((item) => (
-                <div key={item.fee_name} className="flex justify-between text-sm">
-                  <span className="text-foreground">{item.fee_name}</span>
-                  <span className="text-foreground">₱{item.amount.toFixed(2)}</span>
+        {booking.status === "pending_payment" && orderOfPayment && (
+          <>
+            <div className="px-6 pb-5">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+                Fee Assessment
+              </div>
+              <div className="space-y-1.5">
+                {orderOfPayment.items.map((item) => (
+                  <div key={item.fee_name} className="flex justify-between text-sm">
+                    <span className="text-foreground">{item.fee_name}</span>
+                    <span className="text-foreground">₱{item.amount.toFixed(2)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between text-sm font-semibold pt-1.5 border-t border-border">
+                  <span>Total</span>
+                  <span>₱{orderOfPayment.total_amount.toFixed(2)}</span>
                 </div>
-              ))}
-              <div className="flex justify-between text-sm font-semibold pt-1.5 border-t border-border">
-                <span>Total</span>
-                <span>₱{booking.orderOfPayment.total_amount.toFixed(2)}</span>
               </div>
             </div>
-          </div>
+
+            <PaymentUpload
+              referenceCode={reference}
+              residentPhone={booking.residentPhone}
+              orderOfPayment={orderOfPayment}
+              onUploaded={() => setReceiptStatus("submitted")}
+            />
+          </>
         )}
 
         {/* Perforation */}
