@@ -8,6 +8,12 @@ const OFFICE_LABEL_BY_DEPARTMENT_ID = Object.fromEntries(
   CATEGORIES_FULL.map((c) => [c.id, c.label])
 );
 
+// Government-office boilerplate that shows up in almost every department_name
+// ("Office of the Municipal X") and so carries no distinguishing signal on its
+// own — without filtering these, a query like "Municipal Health Office" would
+// OR-match every office in the list instead of just Health.
+const STOPWORDS = new Set(["the", "of", "and", "office", "municipal", "public"]);
+
 function toWords(text) {
   return (text || "")
     .toLowerCase()
@@ -54,7 +60,7 @@ function scoreTokenAgainstWords(nameWords, descWords, deptWords, token) {
 }
 
 export function matchServices(services, query) {
-  const tokens = toWords(query);
+  const tokens = toWords(query).filter((t) => !STOPWORDS.has(t));
   if (tokens.length === 0) return [];
 
   const scored = [];
@@ -66,12 +72,14 @@ export function matchServices(services, query) {
       ...toWords(OFFICE_LABEL_BY_DEPARTMENT_ID[service.department_id]),
     ];
 
+    // Sum scores across tokens rather than requiring every token to match —
+    // a query like "City Health" should still surface Health office results
+    // even though "city" itself matches nothing, as long as some token hits.
     let total = 0;
     for (const token of tokens) {
-      const tokenScore = scoreTokenAgainstWords(nameWords, descWords, deptWords, token);
-      if (tokenScore === 0) return;
-      total += tokenScore;
+      total += scoreTokenAgainstWords(nameWords, descWords, deptWords, token);
     }
+    if (total === 0) return;
     scored.push({ service, total, index });
   });
 
