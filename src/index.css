@@ -15,6 +15,11 @@
   --color-border: rgba(24, 58, 97, 0.12);
   --color-input-background: #F4F1ED;
 
+  /* Homepage redesign additions (dev-essentials/HOMEPAGE_IMPROVEMENT.md) — additive only,
+     existing tokens above are untouched so other pages are unaffected. */
+  --color-surface: #F5F7FA;
+  --color-gold-100: #FBF3E0;
+
   --font-heading: "Libre Baskerville", Georgia, serif;
   --font-body: "Inter", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "Courier New", monospace;

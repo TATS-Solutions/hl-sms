@@ -47,11 +47,11 @@ export const QUICK_CHIPS = [
 ];
 
 export const HOW_STEPS = [
-  { n: "01", label: "Choose Service" },
-  { n: "02", label: "Select Schedule" },
-  { n: "03", label: "Get Confirmation" },
-  { n: "04", label: "Visit Office" },
-  { n: "05", label: "Complete Service" },
+  { n: "01", label: "Find your service", description: "Search by name, or browse by the office that handles it." },
+  { n: "02", label: "Pick a date and time", description: "See open slots for that service and choose what works for you." },
+  { n: "03", label: "Fill in your details", description: "Just your name and contact number — no account needed." },
+  { n: "04", label: "Get your reference code", description: "We'll send it by SMS. Bring it with you on the day." },
+  { n: "05", label: "Show up and get served", description: "Go straight to the office at your scheduled time." },
 ];
 
 // Ids match the backend's real department_id (see /departments).
