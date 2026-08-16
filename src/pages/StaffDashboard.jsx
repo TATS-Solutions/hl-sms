@@ -1,31 +1,35 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, PlayCircle, CheckCircle2, Ban, UserX, RotateCcw, Receipt, X } from "lucide-react";
+import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, CheckCircle2, Ban, UserX, RotateCcw, Receipt, X } from "lucide-react";
 import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDepartments } from "../hooks/useDepartments";
 import { fetchServiceRequests, fetchServiceRequestStats, updateServiceRequestStatus } from "../api/staff";
 import { getStatusInfo } from "../data/statusMap";
 import FeeAssessmentModal from "../components/FeeAssessmentModal";
+import PaymentVerificationModal from "../components/PaymentVerificationModal";
 
 const ASSESSABLE_STATUSES = ["pending", "pending_assessment"];
+// pending_payment can only be reached via Assess Fees (creates the Order of
+// Payment) and processing only via Record Payment (requires an OR number) —
+// both carry data the generic status PATCH can't supply, so neither status
+// appears as a quick one-click transition target below.
+const PAYABLE_STATUSES = ["pending_payment"];
 
 const STATUS_TRANSITIONS = {
-  pending: ["pending_assessment", "pending_payment", "processing", "cancelled", "no_show"],
-  pending_assessment: ["pending_payment", "cancelled"],
-  pending_payment: ["processing", "cancelled"],
+  pending: ["pending_assessment", "cancelled", "no_show"],
+  pending_assessment: ["cancelled"],
+  pending_payment: ["cancelled"],
   processing: ["completed", "cancelled", "no_show"],
   completed: [],
   cancelled: ["pending"],
-  no_show: ["processing", "pending"],
+  no_show: ["pending"],
 };
 
 // Icon + color per target status, used to render the Update column as one-click action buttons.
 const STATUS_ACTION_ICONS = {
   pending: { Icon: RotateCcw, className: "text-yellow-700 hover:bg-yellow-50 border-yellow-200" },
   pending_assessment: { Icon: ClipboardCheck, className: "text-orange-700 hover:bg-orange-50 border-orange-200" },
-  pending_payment: { Icon: CreditCard, className: "text-blue-700 hover:bg-blue-50 border-blue-200" },
-  processing: { Icon: PlayCircle, className: "text-purple-700 hover:bg-purple-50 border-purple-200" },
   completed: { Icon: CheckCircle2, className: "text-green-700 hover:bg-green-50 border-green-200" },
   cancelled: { Icon: Ban, className: "text-red-700 hover:bg-red-50 border-red-200" },
   no_show: { Icon: UserX, className: "text-gray-700 hover:bg-gray-100 border-gray-300" },
@@ -47,6 +51,7 @@ export default function StaffDashboard() {
   const [cancelError, setCancelError] = useState("");
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
   const [assessTarget, setAssessTarget] = useState(null);
+  const [paymentTarget, setPaymentTarget] = useState(null);
 
   const isGlobalRole = user?.role === "admin" || user?.role === "treasurer";
   const { data: departments = [] } = useDepartments({ enabled: isGlobalRole });
@@ -309,7 +314,7 @@ export default function StaffDashboard() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {(nextOptions.length > 0 || ASSESSABLE_STATUSES.includes(r.status)) ? (
+                      {(nextOptions.length > 0 || ASSESSABLE_STATUSES.includes(r.status) || (isGlobalRole && PAYABLE_STATUSES.includes(r.status))) ? (
                         <div className="flex flex-wrap gap-1.5">
                           {ASSESSABLE_STATUSES.includes(r.status) && (
                             <button
@@ -320,6 +325,17 @@ export default function StaffDashboard() {
                               className="flex items-center justify-center w-7 h-7 rounded-lg border bg-card transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 text-primary hover:bg-primary/10 border-primary/40"
                             >
                               <Receipt size={14} />
+                            </button>
+                          )}
+                          {isGlobalRole && PAYABLE_STATUSES.includes(r.status) && (
+                            <button
+                              type="button"
+                              title="Record Payment"
+                              aria-label="Record Payment"
+                              onClick={() => setPaymentTarget(r)}
+                              className="flex items-center justify-center w-7 h-7 rounded-lg border bg-card transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 text-blue-700 hover:bg-blue-50 border-blue-200"
+                            >
+                              <CreditCard size={14} />
                             </button>
                           )}
                           {nextOptions.map((s) => {
@@ -406,6 +422,14 @@ export default function StaffDashboard() {
         <FeeAssessmentModal
           request={assessTarget}
           onClose={() => setAssessTarget(null)}
+          onSuccess={loadData}
+        />
+      )}
+
+      {paymentTarget && (
+        <PaymentVerificationModal
+          request={paymentTarget}
+          onClose={() => setPaymentTarget(null)}
           onSuccess={loadData}
         />
       )}

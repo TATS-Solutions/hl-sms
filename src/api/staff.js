@@ -18,3 +18,6 @@ export const updateServiceRequestStatus = (id, payload) =>
 
 export const assessServiceRequestFees = (id, payload) =>
   apiClient.post(`/admin/service-requests/${id}/assess`, payload);
+
+export const markOrderOfPaymentPaid = (orderOfPaymentId, payload) =>
+  apiClient.post(`/admin/order-of-payments/${orderOfPaymentId}/mark-paid`, payload);
