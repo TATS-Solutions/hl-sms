@@ -1,12 +1,14 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Link2, Copy, Check } from "lucide-react";
 import { useState } from "react";
+import PaymentUpload from "../components/PaymentUpload";
 
 export default function ClaimTicket() {
   const { reference } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const [copied, setCopied] = useState(false);
+  const [uploadedOrderOfPayment, setUploadedOrderOfPayment] = useState(null);
 
   const booking = location.state;
 
@@ -25,6 +27,7 @@ export default function ClaimTicket() {
   }
 
   const date = new Date(booking.date);
+  const effectiveOrderOfPayment = uploadedOrderOfPayment || booking.orderOfPayment;
 
   const handleCopyLink = async () => {
     try {
@@ -74,11 +77,31 @@ export default function ClaimTicket() {
           </div>
         </div>
 
-        <div className="px-6 pb-5">
-          <p className="text-sm text-foreground bg-secondary/40 border border-border rounded-xl px-4 py-3">
-            Your application has been received. Check My Bookings anytime to track its status and fee assessment.
-          </p>
-        </div>
+        {booking.status === "pending_payment" && effectiveOrderOfPayment ? (
+          <div className="px-6 pb-5">
+            <PaymentUpload
+              referenceCode={reference}
+              residentPhone={booking.residentPhone}
+              orderOfPayment={effectiveOrderOfPayment}
+              onUploaded={() =>
+                setUploadedOrderOfPayment({ ...effectiveOrderOfPayment, payment_receipt_status: "submitted" })
+              }
+            />
+          </div>
+        ) : booking.status === "pending_assessment" ? (
+          <div className="px-6 pb-5">
+            <p className="text-sm text-foreground bg-secondary/40 border border-border rounded-xl px-4 py-3">
+              Staff will review your application and compute the required fees. Once assessed, you can pay online
+              from the My Bookings page.
+            </p>
+          </div>
+        ) : (
+          <div className="px-6 pb-5">
+            <p className="text-sm text-foreground bg-secondary/40 border border-border rounded-xl px-4 py-3">
+              Your application has been received. Check My Bookings anytime to track its status and fee assessment.
+            </p>
+          </div>
+        )}
 
         {/* Perforation */}
         <div className="relative flex items-center">

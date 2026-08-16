@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { lookupServiceRequest } from "../api/serviceRequests";
 import { getStatusInfo } from "../data/statusMap";
+import PaymentUpload from "../components/PaymentUpload";
 
 export default function MyBookings() {
   const [reference, setReference] = useState("");
@@ -32,6 +33,15 @@ export default function MyBookings() {
   };
 
   const statusInfo = booking ? getStatusInfo(booking.status) : null;
+
+  const refreshBooking = async () => {
+    try {
+      const response = await lookupServiceRequest(reference.trim(), mobile.trim());
+      setBooking(response.data.data);
+    } catch {
+      // silently ignore — the receipt upload itself already succeeded
+    }
+  };
 
   return (
     <div className="max-w-md mx-auto px-4 py-10">
@@ -144,6 +154,17 @@ export default function MyBookings() {
                     <span>₱{booking.order_of_payment.total_amount.toFixed(2)}</span>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {booking.status === "pending_payment" && booking.order_of_payment && (
+              <div className="mt-4 pt-4 border-t border-border">
+                <PaymentUpload
+                  referenceCode={booking.reference_code}
+                  residentPhone={mobile.trim()}
+                  orderOfPayment={booking.order_of_payment}
+                  onUploaded={refreshBooking}
+                />
               </div>
             )}
           </div>
