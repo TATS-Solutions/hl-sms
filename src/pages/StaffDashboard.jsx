@@ -26,13 +26,13 @@ const STATUS_TRANSITIONS = {
   no_show: ["pending"],
 };
 
-// Icon + color per target status, used to render the Update column as one-click action buttons.
+// Icon + label + color per target status, used to render the Update column as one-click action buttons.
 const STATUS_ACTION_ICONS = {
-  pending: { Icon: RotateCcw, className: "text-yellow-700 hover:bg-yellow-50 border-yellow-200" },
-  pending_assessment: { Icon: ClipboardCheck, className: "text-orange-700 hover:bg-orange-50 border-orange-200" },
-  completed: { Icon: CheckCircle2, className: "text-green-700 hover:bg-green-50 border-green-200" },
-  cancelled: { Icon: Ban, className: "text-red-700 hover:bg-red-50 border-red-200" },
-  no_show: { Icon: UserX, className: "text-gray-700 hover:bg-gray-100 border-gray-300" },
+  pending: { Icon: RotateCcw, label: "Reopen", className: "text-yellow-700 hover:bg-yellow-50 border-yellow-200" },
+  pending_assessment: { Icon: ClipboardCheck, label: "Needs Assessment", className: "text-orange-700 hover:bg-orange-50 border-orange-200" },
+  completed: { Icon: CheckCircle2, label: "Mark Completed", className: "text-green-700 hover:bg-green-50 border-green-200" },
+  cancelled: { Icon: Ban, label: "Cancel", className: "text-red-700 hover:bg-red-50 border-red-200" },
+  no_show: { Icon: UserX, label: "Mark No Show", className: "text-gray-700 hover:bg-gray-100 border-gray-300" },
 };
 
 export default function StaffDashboard() {
@@ -323,37 +323,34 @@ export default function StaffDashboard() {
                           {ASSESSABLE_STATUSES.includes(r.status) && (
                             <button
                               type="button"
-                              title="Assess Fees"
                               aria-label="Assess Fees"
                               onClick={() => setAssessTarget(r)}
-                              className="flex items-center justify-center w-7 h-7 rounded-lg border bg-card transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 text-primary hover:bg-primary/10 border-primary/40"
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-card text-xs font-medium whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 text-primary hover:bg-primary/10 border-primary/40"
                             >
-                              <Receipt size={14} />
+                              <Receipt size={13} /> Assess Fees
                             </button>
                           )}
                           {canProcessPayments && PAYABLE_STATUSES.includes(r.status) && (
                             <button
                               type="button"
-                              title="Record Payment"
                               aria-label="Record Payment"
                               onClick={() => setPaymentTarget(r)}
-                              className="flex items-center justify-center w-7 h-7 rounded-lg border bg-card transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 text-blue-700 hover:bg-blue-50 border-blue-200"
+                              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-card text-xs font-medium whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 text-blue-700 hover:bg-blue-50 border-blue-200"
                             >
-                              <CreditCard size={14} />
+                              <CreditCard size={13} /> Record Payment
                             </button>
                           )}
                           {nextOptions.map((s) => {
-                            const { Icon, className } = STATUS_ACTION_ICONS[s] || {};
+                            const { Icon, label, className } = STATUS_ACTION_ICONS[s] || {};
                             return (
                               <button
                                 key={s}
                                 type="button"
-                                title={getStatusInfo(s).label}
                                 aria-label={`Mark as ${getStatusInfo(s).label}`}
                                 onClick={() => (s === "cancelled" ? openCancelModal(r) : handleStatusChange(r, s))}
-                                className={`flex items-center justify-center w-7 h-7 rounded-lg border bg-card transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${className || "text-muted-foreground hover:bg-secondary/40 border-border"}`}
+                                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-card text-xs font-medium whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${className || "text-muted-foreground hover:bg-secondary/40 border-border"}`}
                               >
-                                {Icon && <Icon size={14} />}
+                                {Icon && <Icon size={13} />} {label || getStatusInfo(s).label}
                               </button>
                             );
                           })}
