@@ -3,14 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Building2, FileText, CheckSquare, Square, Truck } from "lucide-react";
 import { useServiceDetail } from "../hooks/useServiceDetail";
 import StepIndicator from "../components/StepIndicator";
-import PrerequisiteModal from "../components/PrerequisiteModal";
 
 export default function ServiceDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { data: service, isLoading, isError } = useServiceDetail(slug);
   const [checkedReqs, setCheckedReqs] = useState({});
-  const [activePrereq, setActivePrereq] = useState(null);
 
   if (isLoading) {
     return (
@@ -32,11 +30,6 @@ export default function ServiceDetail() {
   }
 
   const toggleReq = (req) => {
-    const isChecked = checkedReqs[req.id];
-    if (!isChecked && req.prerequisite_service) {
-      setActivePrereq(req);
-      return;
-    }
     setCheckedReqs((prev) => ({ ...prev, [req.id]: !prev[req.id] }));
   };
 
@@ -112,21 +105,32 @@ export default function ServiceDetail() {
               </div>
               <div className="space-y-2">
                 {service.requirements.map((req) => (
-                  <button
-                    key={req.id}
-                    onClick={() => toggleReq(req)}
-                    className="w-full flex items-start gap-2.5 text-left p-2.5 rounded-lg hover:bg-secondary transition-colors"
-                  >
-                    {checkedReqs[req.id] ? (
-                      <CheckSquare size={17} className="text-accent flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <Square size={17} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                  <div key={req.id} className="rounded-lg p-2.5 hover:bg-secondary transition-colors">
+                    <button
+                      onClick={() => toggleReq(req)}
+                      className="w-full flex items-start gap-2.5 text-left"
+                    >
+                      {checkedReqs[req.id] ? (
+                        <CheckSquare size={17} className="text-accent flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <Square size={17} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+                      )}
+                      <span className="text-sm text-foreground leading-relaxed">
+                        {req.requirement_text}
+                        {req.is_mandatory && <span className="text-destructive ml-1">*</span>}
+                      </span>
+                    </button>
+                    {req.prerequisite_service && (
+                      <a
+                        href={`/services/${req.prerequisite_service.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-[26px] mt-1 text-xs text-accent hover:underline flex items-center gap-1 w-fit"
+                      >
+                        Don't have it? Apply for {req.prerequisite_service.name} <ArrowRight size={11} />
+                      </a>
                     )}
-                    <span className="text-sm text-foreground leading-relaxed">
-                      {req.requirement_text}
-                      {req.is_mandatory && <span className="text-destructive ml-1">*</span>}
-                    </span>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -152,8 +156,6 @@ export default function ServiceDetail() {
           Check off all required items above before continuing.
         </p>
       )}
-
-      <PrerequisiteModal requirement={activePrereq} onClose={() => setActivePrereq(null)} />
     </div>
   );
 }
