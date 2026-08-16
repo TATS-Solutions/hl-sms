@@ -154,6 +154,16 @@ export default function MyBookings() {
                     <span>₱{booking.order_of_payment.total_amount.toFixed(2)}</span>
                   </div>
                 </div>
+                {booking.order_of_payment.paid_at && (
+                  <div className="flex justify-between text-xs text-muted-foreground mt-2 pt-2 border-t border-border">
+                    <span>
+                      Paid {new Date(booking.order_of_payment.paid_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </span>
+                    {booking.order_of_payment.or_number && (
+                      <span style={{ fontFamily: "var(--font-mono)" }}>OR# {booking.order_of_payment.or_number}</span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

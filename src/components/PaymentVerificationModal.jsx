@@ -62,11 +62,32 @@ export default function PaymentVerificationModal({ request, onClose, onSuccess }
 
         <div className="p-5 overflow-y-auto">
           {orderOfPayment && (
-            <div className="flex justify-between items-center mb-4 pb-4 border-b border-border">
-              <span className="text-sm font-semibold text-foreground">Amount Due</span>
-              <span className="text-lg font-bold text-primary" style={{ fontFamily: "var(--font-mono)" }}>
-                ₱{orderOfPayment.total_amount.toFixed(2)}
-              </span>
+            <div className="mb-4 pb-4 border-b border-border">
+              <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
+                Fee Breakdown
+              </label>
+              <div className="space-y-1.5">
+                {orderOfPayment.items.map((item) => (
+                  <div key={item.fee_name} className="flex justify-between text-sm">
+                    <span className="text-foreground">{item.fee_name}</span>
+                    <span className="text-foreground" style={{ fontFamily: "var(--font-mono)" }}>
+                      ₱{item.amount.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+                {orderOfPayment.penalty_amount > 0 && (
+                  <div className="flex justify-between text-sm text-destructive">
+                    <span>Penalty</span>
+                    <span style={{ fontFamily: "var(--font-mono)" }}>₱{orderOfPayment.penalty_amount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-1.5 border-t border-border">
+                  <span className="text-sm font-semibold text-foreground">Amount Due</span>
+                  <span className="text-lg font-bold text-primary" style={{ fontFamily: "var(--font-mono)" }}>
+                    ₱{orderOfPayment.total_amount.toFixed(2)}
+                  </span>
+                </div>
+              </div>
             </div>
           )}
 
