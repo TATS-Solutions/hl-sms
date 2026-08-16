@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, CheckCircle2, Ban, UserX, RotateCcw, Receipt, X, Eye } from "lucide-react";
+import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, CheckCircle2, Ban, UserX, RotateCcw, Receipt, X } from "lucide-react";
 import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDepartments } from "../hooks/useDepartments";
@@ -54,6 +54,10 @@ export default function StaffDashboard() {
   const [paymentTarget, setPaymentTarget] = useState(null);
 
   const isGlobalRole = user?.role === "admin" || user?.role === "treasurer";
+  // Only the Treasurer's Office (and admin, for oversight) handles anything
+  // payment-related — recording payment, reviewing uploaded receipts. Fee
+  // assessment is a separate task owned by the processing department, not Treasury.
+  const canProcessPayments = user?.role === "admin" || user?.role === "treasurer";
   const { data: departments = [] } = useDepartments({ enabled: isGlobalRole });
 
   const debouncedSearch = useDebouncedValue(search, 350);
@@ -314,20 +318,8 @@ export default function StaffDashboard() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {(nextOptions.length > 0 || ASSESSABLE_STATUSES.includes(r.status) || (isGlobalRole && PAYABLE_STATUSES.includes(r.status))) ? (
+                      {(nextOptions.length > 0 || ASSESSABLE_STATUSES.includes(r.status) || (canProcessPayments && PAYABLE_STATUSES.includes(r.status))) ? (
                         <div className="flex flex-wrap gap-1.5">
-                          {r.order_of_payment?.payment_receipt_url && (
-                            <a
-                              href={r.order_of_payment.payment_receipt_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="View Receipt"
-                              aria-label="View uploaded payment receipt"
-                              className="flex items-center justify-center w-7 h-7 rounded-lg border bg-card transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 text-teal-700 hover:bg-teal-50 border-teal-200"
-                            >
-                              <Eye size={14} />
-                            </a>
-                          )}
                           {ASSESSABLE_STATUSES.includes(r.status) && (
                             <button
                               type="button"
@@ -339,7 +331,7 @@ export default function StaffDashboard() {
                               <Receipt size={14} />
                             </button>
                           )}
-                          {isGlobalRole && PAYABLE_STATUSES.includes(r.status) && (
+                          {canProcessPayments && PAYABLE_STATUSES.includes(r.status) && (
                             <button
                               type="button"
                               title="Record Payment"

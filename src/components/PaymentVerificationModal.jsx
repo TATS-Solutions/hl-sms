@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, FileText, ExternalLink } from "lucide-react";
 import { markOrderOfPaymentPaid } from "../api/staff";
 
 const PAYMENT_CHANNELS = [
@@ -67,6 +67,42 @@ export default function PaymentVerificationModal({ request, onClose, onSuccess }
               <span className="text-lg font-bold text-primary" style={{ fontFamily: "var(--font-mono)" }}>
                 ₱{orderOfPayment.total_amount.toFixed(2)}
               </span>
+            </div>
+          )}
+
+          {orderOfPayment?.payment_receipt_url && (
+            <div className="mb-4 pb-4 border-b border-border">
+              <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
+                Submitted Receipt
+              </label>
+              {orderOfPayment.payment_receipt_url.toLowerCase().endsWith(".pdf") ? (
+                <a
+                  href={orderOfPayment.payment_receipt_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-secondary/40 border border-border rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+                >
+                  <FileText size={16} className="text-primary flex-shrink-0" />
+                  View submitted PDF receipt
+                  <ExternalLink size={12} className="ml-auto text-muted-foreground flex-shrink-0" />
+                </a>
+              ) : (
+                <a
+                  href={orderOfPayment.payment_receipt_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block relative group"
+                >
+                  <img
+                    src={orderOfPayment.payment_receipt_url}
+                    alt="Submitted payment receipt"
+                    className="w-full max-h-56 object-contain rounded-lg border border-border bg-secondary/40"
+                  />
+                  <span className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/60 text-white text-[10px] px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ExternalLink size={10} /> View full size
+                  </span>
+                </a>
+              )}
             </div>
           )}
 
