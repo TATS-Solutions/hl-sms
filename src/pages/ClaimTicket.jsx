@@ -1,22 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Link2, Copy, Check } from "lucide-react";
 import { useState } from "react";
-import { getStatusInfo } from "../data/statusMap";
-
-function getSubmissionMessage(status, orderOfPayment) {
-  switch (status) {
-    case "pending_payment":
-      return orderOfPayment
-        ? `Fees have been assessed — please pay ₱${orderOfPayment.total_amount.toFixed(2)} at the Treasurer's Office to proceed.`
-        : "Fees have been assessed. Please pay at the Treasurer's Office to proceed.";
-    case "pending_assessment":
-      return "Your application is under staff review. We'll compute the required fees shortly.";
-    case "pending":
-      return "Your application has been received and is queued for processing.";
-    default:
-      return null;
-  }
-}
 
 export default function ClaimTicket() {
   const { reference } = useParams();
@@ -41,8 +25,6 @@ export default function ClaimTicket() {
   }
 
   const date = new Date(booking.date);
-  const statusInfo = booking.status ? getStatusInfo(booking.status) : null;
-  const submissionMessage = getSubmissionMessage(booking.status, booking.orderOfPayment);
 
   const handleCopyLink = async () => {
     try {
@@ -73,11 +55,6 @@ export default function ClaimTicket() {
               {booking.serviceName}
             </div>
           </div>
-          {statusInfo && (
-            <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold whitespace-nowrap ${statusInfo.color}`}>
-              {statusInfo.label}
-            </span>
-          )}
         </div>
 
         <div className="px-6 py-5 grid grid-cols-2 gap-4">
@@ -97,33 +74,11 @@ export default function ClaimTicket() {
           </div>
         </div>
 
-        {submissionMessage && (
-          <div className="px-6 pb-5">
-            <p className="text-sm text-foreground bg-secondary/40 border border-border rounded-xl px-4 py-3">
-              {submissionMessage}
-            </p>
-          </div>
-        )}
-
-        {booking.status === "pending_payment" && booking.orderOfPayment && (
-          <div className="px-6 pb-5">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-              Fee Assessment
-            </div>
-            <div className="space-y-1.5">
-              {booking.orderOfPayment.items.map((item) => (
-                <div key={item.fee_name} className="flex justify-between text-sm">
-                  <span className="text-foreground">{item.fee_name}</span>
-                  <span className="text-foreground">₱{item.amount.toFixed(2)}</span>
-                </div>
-              ))}
-              <div className="flex justify-between text-sm font-semibold pt-1.5 border-t border-border">
-                <span>Total</span>
-                <span>₱{booking.orderOfPayment.total_amount.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="px-6 pb-5">
+          <p className="text-sm text-foreground bg-secondary/40 border border-border rounded-xl px-4 py-3">
+            Your application has been received. Check My Bookings anytime to track its status and fee assessment.
+          </p>
+        </div>
 
         {/* Perforation */}
         <div className="relative flex items-center">
