@@ -86,10 +86,10 @@ export default function MyBookings() {
           <div className="bg-primary px-5 py-4 flex items-start justify-between gap-2">
             <div>
               <div className="text-[10px] uppercase tracking-[0.2em] text-white/40 mb-1">
-                {booking.department_name}
+                {booking.department?.name}
               </div>
               <div className="text-white font-semibold text-sm" style={{ fontFamily: "var(--font-heading)" }}>
-                {booking.service_name}
+                {booking.service?.name}
               </div>
             </div>
             <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold whitespace-nowrap ${statusInfo.color}`}>
@@ -101,6 +101,10 @@ export default function MyBookings() {
             <p className="text-xs text-muted-foreground leading-relaxed mb-4">{statusInfo.note}</p>
 
             <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Booked By</div>
+                <div className="text-sm text-foreground">{booking.resident_name}</div>
+              </div>
               {booking.scheduled_date && (
                 <div>
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Date</div>
