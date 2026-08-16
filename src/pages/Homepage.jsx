@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, ChevronRight, Clock, X, Shield, SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck, ArrowRight, Users, Phone, Mail, FileText, Truck, Banknote } from "lucide-react";
+import { Search, ChevronRight, Clock, X, Shield, CalendarCheck, IdCard, Ticket, Building2, MapPin, ArrowRight, ArrowUpRight, Users, Phone, Mail, FileText, Truck, Banknote, FileCheck2, ScrollText, Stethoscope, HandCoins, Heart, Baby, FlaskConical, Pill, HeartHandshake } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CATEGORIES_FULL, HOW_STEPS } from "../data/services";
 import { useServices } from "../hooks/useServices";
@@ -7,7 +7,32 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { matchServices } from "../utils/search";
 import hilongosLogo from "../assets/hilongos-logo.png";
 
-const STEP_ICONS = [SearchCheck, Calendar, CheckCircle, MapPin, ShieldCheck];
+const STEP_ICONS = [Search, CalendarCheck, IdCard, Ticket, Building2];
+
+// Department ids that have real, bookable services in this system (see CLAUDE.md —
+// everything else routes out to eLGU). Used to order/label the office pills.
+const PHASE1_DEPT_IDS = [1, 2, 12];
+
+// One icon family per office (§5 rule) so a resident can tell the office from the icon
+// before reading the heading. Falls back to a generic document icon.
+const SERVICE_ICON_RULES = [
+  { keyword: "certificate", Icon: FileCheck2 },
+  { keyword: "indigency", Icon: ScrollText },
+  { keyword: "consultation", Icon: Stethoscope },
+  { keyword: "prenatal", Icon: Heart },
+  { keyword: "child care", Icon: Baby },
+  { keyword: "laboratory", Icon: FlaskConical },
+  { keyword: "family planning", Icon: Pill },
+  { keyword: "financial assistance", Icon: HandCoins },
+  { keyword: "marriage", Icon: HeartHandshake },
+  { keyword: "counsel", Icon: Users },
+];
+
+function getServiceIcon(name = "") {
+  const lower = name.toLowerCase();
+  const rule = SERVICE_ICON_RULES.find(r => lower.includes(r.keyword));
+  return rule?.Icon ?? FileText;
+}
 
 export default function Homepage() {
   const navigate = useNavigate();
@@ -31,6 +56,18 @@ export default function Homepage() {
     return matches;
   }, [cat, services]);
 
+  const departmentCounts = useMemo(() => {
+    const map = new Map();
+    services.forEach(s => map.set(s.department_id, (map.get(s.department_id) ?? 0) + 1));
+    return map;
+  }, [services]);
+
+  const sortedCategories = useMemo(() => {
+    const phase1 = CATEGORIES_FULL.filter(c => PHASE1_DEPT_IDS.includes(c.id));
+    const rest = CATEGORIES_FULL.filter(c => !PHASE1_DEPT_IDS.includes(c.id));
+    return [...phase1, ...rest];
+  }, []);
+
   const departmentGroups = useMemo(() => {
     const map = new Map();
     filtered.forEach(s => {
@@ -43,15 +80,15 @@ export default function Homepage() {
   }, [filtered]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       {/* Hero */}
-      <section className="relative min-h-[88vh] flex items-center bg-primary">
+      <section className="relative min-h-[75vh] flex items-center bg-[#12294A]">
         <img
           src="https://commons.wikimedia.org/wiki/Special:FilePath/Church_of_Hilongos,_Leyte.jpg?width=1600"
           alt="Church of Hilongos, Leyte, with its bell tower"
           className="absolute inset-0 w-full h-full object-cover opacity-25"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/65 to-primary/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#12294A]/90 via-[#12294A]/75 to-[#12294A]/60" />
 
         <div className="relative w-full max-w-4xl mx-auto px-4 pt-28 pb-20">
           <div className="max-w-2xl">
@@ -71,8 +108,9 @@ export default function Homepage() {
               Book appointments, submit applications, and access municipal services from one unified portal.
             </p>
 
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch">
             <div
-              className="relative"
+              className="relative flex-1 min-w-0"
               onBlur={e => {
                 // Closes on focus leaving the whole search box (input, clear button, or a
                 // suggestion), not just the input — so clicking a suggestion (which briefly
@@ -189,6 +227,14 @@ export default function Homepage() {
               )}
             </div>
 
+              <button
+                onClick={() => navigate("/my-bookings")}
+                className="flex items-center justify-center gap-2 border border-white/40 text-white rounded-2xl px-5 py-4 text-sm font-medium hover:bg-white/10 transition-colors whitespace-nowrap"
+              >
+                Track my booking
+              </button>
+            </div>
+
             <div className="mt-5 flex flex-wrap gap-2">
               {services.slice(0, 6).map(s => (
                 <button
@@ -205,63 +251,37 @@ export default function Homepage() {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="bg-background py-16 px-4">
+      {/* How to book a service */}
+      <section className="bg-surface py-16 px-4">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-2xl font-bold text-primary mb-2" style={{ fontFamily: "var(--font-heading)" }}>
-              How it works
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-2" style={{ fontFamily: "var(--font-heading)" }}>
+              How to book a service
             </h2>
             <p className="text-muted-foreground text-sm">
-              From search to service completion in five straightforward steps.
+              Five steps. Most take under a minute.
             </p>
           </div>
 
-          {/* Desktop: connected horizontal flow */}
-          <div className="hidden sm:block relative">
-            <div className="absolute top-7 left-0 right-0 h-px bg-border" style={{ margin: "0 3.5rem" }} />
-            <div className="relative flex justify-between">
-              {HOW_STEPS.map((step, index) => {
-                const StepIcon = STEP_ICONS[index];
-                return (
-                  <div key={step.n} className="flex flex-col items-center text-center w-32">
-                    <div className="relative z-10 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-md ring-4 ring-background">
-                      <StepIcon size={22} strokeWidth={1.75} />
-                    </div>
-                    <div
-                      className="text-[10px] font-bold text-accent tracking-[0.15em] mt-4 mb-1 uppercase"
-                      style={{ fontFamily: "var(--font-mono)" }}
-                    >
-                      {step.n}
-                    </div>
-                    <div className="text-sm font-semibold text-foreground leading-snug">{step.label}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Mobile: vertical flow */}
-          <div className="sm:hidden space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             {HOW_STEPS.map((step, index) => {
               const StepIcon = STEP_ICONS[index];
-              const isLast = index === HOW_STEPS.length - 1;
               return (
-                <div key={step.n} className="flex items-start gap-4">
-                  <div className="flex flex-col items-center flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-md">
-                      <StepIcon size={20} strokeWidth={1.75} />
-                    </div>
-                    {!isLast && <div className="w-px flex-1 min-h-6 bg-border mt-2" />}
-                  </div>
-                  <div className="pt-2.5">
+                <div key={step.n} className="bg-white rounded-2xl p-5 shadow-sm flex lg:flex-col items-start lg:items-stretch gap-4 lg:gap-0">
+                  <div className="flex flex-col items-center flex-shrink-0 lg:items-start">
                     <div
-                      className="text-[10px] font-bold text-accent tracking-[0.15em] mb-1 uppercase"
+                      className="text-[11px] font-semibold text-accent tracking-[0.1em] mb-2 lg:mb-3"
                       style={{ fontFamily: "var(--font-mono)" }}
                     >
                       {step.n}
                     </div>
-                    <div className="text-sm font-semibold text-foreground leading-snug">{step.label}</div>
+                    <div className="w-12 h-12 rounded-xl bg-gold-100 flex items-center justify-center lg:mb-4">
+                      <StepIcon size={24} className="text-primary" strokeWidth={1.75} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-base font-semibold text-foreground leading-snug mb-1">{step.label}</div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                   </div>
                 </div>
               );
@@ -274,26 +294,38 @@ export default function Homepage() {
       <section className="bg-card py-12 px-4 border-y border-border">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-xl font-bold text-primary mb-2 text-center" style={{ fontFamily: "var(--font-heading)" }}>
-            Browse by Office
+            Find a service by office
           </h2>
           <p className="text-sm text-muted-foreground text-center mb-6">
             Explore every service by office — separate from the search box above.
           </p>
           <div className="flex flex-wrap justify-center gap-2">
-            {CATEGORIES_FULL.map(c => (
-              <button
-                key={c.id}
-                onClick={() => setCat(cat === c.id ? null : c.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-medium transition-all ${
-                  cat === c.id
-                    ? "bg-primary text-white border-primary shadow-md"
-                    : "bg-background border-border text-foreground hover:border-primary/50 hover:shadow-sm"
-                }`}
-              >
-                <c.Icon size={16} strokeWidth={1.75} />
-                <span>{c.label}</span>
-              </button>
-            ))}
+            {sortedCategories.map(c => {
+              const count = departmentCounts.get(c.id) ?? 0;
+              const isPhase1 = PHASE1_DEPT_IDS.includes(c.id);
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setCat(cat === c.id ? null : c.id)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-medium transition-all ${
+                    cat === c.id
+                      ? "bg-primary text-white border-primary shadow-md"
+                      : "bg-background border-border text-foreground hover:border-primary/50 hover:shadow-sm"
+                  }`}
+                >
+                  <c.Icon size={16} strokeWidth={1.75} />
+                  <span>{c.label}</span>
+                  {isPhase1 && count > 0 && (
+                    <span className={cat === c.id ? "text-white/70" : "text-muted-foreground"}>· {count}</span>
+                  )}
+                  {!isPhase1 && (
+                    <span className={`flex items-center gap-0.5 text-xs ${cat === c.id ? "text-white/70" : "text-muted-foreground"}`}>
+                      via eLGU <ArrowUpRight size={11} />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -341,14 +373,16 @@ export default function Homepage() {
               {dept.name}
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              {dept.services.map(s => (
+              {dept.services.map(s => {
+                const ServiceIcon = getServiceIcon(s.name);
+                return (
                 <div
                   key={s.id}
                   className="bg-card border border-border rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all"
                 >
                   <div className="flex items-start gap-3 mb-4">
                     <div className="w-11 h-11 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0">
-                      <FileText size={22} className="text-primary" strokeWidth={1.75} />
+                      <ServiceIcon size={22} className="text-primary" strokeWidth={1.75} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-foreground text-sm leading-snug">{s.name}</h3>
@@ -356,12 +390,24 @@ export default function Homepage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <div className="flex items-center gap-2 flex-wrap min-w-0">
-                      <span className="flex items-center gap-1 text-xs text-green-800 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 whitespace-nowrap">
-                        <Banknote size={11} />
-                        {s.fixed_fee > 0 ? `₱${s.fixed_fee}` : s.has_variable_fee ? "Variable fee" : "No fee"}
-                      </span>
+                  <div className="flex flex-col gap-3 pt-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {s.fixed_fee > 0 ? (
+                        <span className="flex items-center gap-1 text-xs text-foreground bg-secondary border border-border rounded-full px-2 py-0.5 whitespace-nowrap">
+                          <Banknote size={11} />
+                          {`₱${s.fixed_fee}`}
+                        </span>
+                      ) : s.has_variable_fee ? (
+                        <span className="flex items-center gap-1 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                          <Banknote size={11} />
+                          Variable fee
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-xs text-green-800 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                          <Banknote size={11} />
+                          No fee
+                        </span>
+                      )}
                       {s.is_deliver && (
                         <span className="flex items-center gap-1 text-xs text-accent bg-accent/10 rounded-full px-2 py-0.5 whitespace-nowrap">
                           <Truck size={11} /> Delivery available
@@ -370,13 +416,14 @@ export default function Homepage() {
                     </div>
                     <button
                       onClick={() => navigate(`/services/${s.slug}`)}
-                      className="text-sm bg-primary text-white rounded-xl px-4 py-2 font-semibold hover:bg-primary/90 transition-colors flex items-center gap-1.5 flex-shrink-0"
+                      className="w-full sm:w-auto sm:self-end text-sm bg-primary text-white rounded-xl px-4 py-2 font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5"
                     >
                       View Details <ArrowRight size={13} />
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         ))}
@@ -421,8 +468,16 @@ export default function Homepage() {
 
           <div>
             <div className="text-[10px] uppercase tracking-widest text-white/40 mb-3 font-semibold">Services</div>
+            <ul className="space-y-2 mb-5">
+              {["Health & Family", "Social Services"].map(item => (
+                <li key={item}>
+                  <button className="text-sm text-white/55 hover:text-white transition-colors">{item}</button>
+                </li>
+              ))}
+            </ul>
+            <div className="text-[10px] uppercase tracking-widest text-white/40 mb-3 font-semibold">Related links (eLGU)</div>
             <ul className="space-y-2">
-              {["Health & Family", "Social Services", "Civil Registry", "Business Permits", "Treasury"].map(item => (
+              {["Civil Registry", "Business Permits", "Treasury"].map(item => (
                 <li key={item}>
                   <button className="text-sm text-white/55 hover:text-white transition-colors">{item}</button>
                 </li>
