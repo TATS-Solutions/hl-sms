@@ -151,13 +151,13 @@ export default function PaymentUpload({ referenceCode, residentPhone, orderOfPay
       <label className="block text-xs text-muted-foreground mb-1.5">
         Upload your payment receipt <span className="text-destructive">*</span>
       </label>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 border border-dashed border-border rounded-lg px-3 py-2 bg-input-background">
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp,application/pdf"
           onChange={handleFileChange}
           disabled={submitting}
-          className="flex-1 text-xs text-foreground file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-secondary/60 file:text-foreground hover:file:bg-secondary disabled:opacity-50"
+          className="flex-1 text-xs text-muted-foreground cursor-pointer file:mr-3 file:py-2 file:px-3.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white file:cursor-pointer hover:file:bg-primary/90 disabled:opacity-50"
         />
       </div>
 

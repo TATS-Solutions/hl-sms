@@ -1,7 +1,22 @@
 import apiClient from "./client";
 
-export const submitServiceRequest = (payload) =>
-  apiClient.post("/service-requests", payload);
+export const submitServiceRequest = (payload, requirementFiles = {}) => {
+  const fileEntries = Object.entries(requirementFiles).filter(([, file]) => file);
+  if (fileEntries.length === 0) {
+    return apiClient.post("/service-requests", payload);
+  }
+  const formData = new FormData();
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === null || value === undefined) return;
+    formData.append(key, typeof value === "object" ? JSON.stringify(value) : value);
+  });
+  fileEntries.forEach(([requirementId, file]) => {
+    formData.append(`documents[${requirementId}]`, file);
+  });
+  return apiClient.post("/service-requests", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
 
 export const lookupServiceRequest = (referenceCode, residentPhone) =>
   apiClient.post("/service-requests/lookup", {

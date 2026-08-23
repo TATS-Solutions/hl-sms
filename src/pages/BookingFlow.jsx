@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Pencil, Truck, MapPin } from "lucide-react";
 import { useServiceDetail } from "../hooks/useServiceDetail";
 import { submitServiceRequest } from "../api/serviceRequests";
@@ -14,7 +14,9 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function BookingFlow() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: service, isLoading, isError } = useServiceDetail(slug);
+  const requirementFiles = useMemo(() => location.state?.requirementFiles || {}, [location.state]);
 
   const [step, setStep] = useState(2);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -32,6 +34,16 @@ export default function BookingFlow() {
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [editingField, setEditingField] = useState(null);
+
+  useEffect(() => {
+    if (!service) return;
+    const missingMandatoryUpload = service.requirements.some(
+      (req) => req.is_mandatory && req.requires_upload && !requirementFiles[req.id]
+    );
+    if (missingMandatoryUpload) {
+      navigate(`/services/${service.slug}`, { replace: true });
+    }
+  }, [service, requirementFiles, navigate]);
 
   if (isLoading) {
     return <div className="max-w-2xl mx-auto px-4 py-16 text-center text-muted-foreground text-sm">Loading…</div>;
@@ -78,18 +90,21 @@ export default function BookingFlow() {
     setSubmitting(true);
     setSubmitError("");
     try {
-      const response = await submitServiceRequest({
-        service_id: service.id,
-        resident_name: fullName.trim(),
-        resident_phone: mobile.trim(),
-        resident_email: email.trim(),
-        booked_for_name: null,
-        scheduled_date: selectedDate.toISOString().slice(0, 10),
-        scheduled_time: to24Hour(selectedSlot),
-        form_data: service.is_deliver
-          ? { ...formData, wants_delivery: wantsDelivery, delivery_address: wantsDelivery ? deliveryAddress.trim() : null }
-          : formData,
-      });
+      const response = await submitServiceRequest(
+        {
+          service_id: service.id,
+          resident_name: fullName.trim(),
+          resident_phone: mobile.trim(),
+          resident_email: email.trim(),
+          booked_for_name: null,
+          scheduled_date: selectedDate.toISOString().slice(0, 10),
+          scheduled_time: to24Hour(selectedSlot),
+          form_data: service.is_deliver
+            ? { ...formData, wants_delivery: wantsDelivery, delivery_address: wantsDelivery ? deliveryAddress.trim() : null }
+            : formData,
+        },
+        requirementFiles
+      );
       const submittedRequest = response.data.data;
       navigate(`/ticket/${response.data.meta.reference_code}`, {
         state: {
