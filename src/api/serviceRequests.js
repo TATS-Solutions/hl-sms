@@ -13,9 +13,12 @@ export const submitServiceRequest = (payload, requirementFiles = {}) => {
   fileEntries.forEach(([requirementId, file]) => {
     formData.append(`documents[${requirementId}]`, file);
   });
-  return apiClient.post("/service-requests", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  // Do NOT set Content-Type manually here: axios's xhr adapter passes an explicit
+  // header straight to XMLHttpRequest.setRequestHeader() without a boundary param,
+  // and the browser will not append one once the header is already set, so the
+  // multipart body would be silently unparseable server-side. Leaving it unset lets
+  // axios/the browser generate "multipart/form-data; boundary=..." automatically.
+  return apiClient.post("/service-requests", formData);
 };
 
 export const lookupServiceRequest = (referenceCode, residentPhone) =>
