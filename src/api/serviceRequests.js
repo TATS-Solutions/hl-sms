@@ -13,12 +13,18 @@ export const submitServiceRequest = (payload, requirementFiles = {}) => {
   fileEntries.forEach(([requirementId, file]) => {
     formData.append(`documents[${requirementId}]`, file);
   });
-  // Do NOT set Content-Type manually here: axios's xhr adapter passes an explicit
-  // header straight to XMLHttpRequest.setRequestHeader() without a boundary param,
-  // and the browser will not append one once the header is already set, so the
-  // multipart body would be silently unparseable server-side. Leaving it unset lets
-  // axios/the browser generate "multipart/form-data; boundary=..." automatically.
-  return apiClient.post("/service-requests", formData);
+  // Content-Type must be explicitly cleared (not just omitted) here. apiClient has a
+  // default "Content-Type: application/json" — if that's still in effect when axios
+  // sees a FormData body, its transformRequest treats the request as JSON and converts
+  // the FormData into a plain object (formDataToJSON) before JSON.stringify-ing it,
+  // silently destroying the file upload and mangling documents[<id>] into a sparse
+  // array. Setting it to null overrides the default so axios sends the FormData as-is,
+  // and leaves the header itself unset so the browser can generate the correct
+  // "multipart/form-data; boundary=..." value (a hardcoded string here would omit the
+  // boundary and be just as unparseable server-side).
+  return apiClient.post("/service-requests", formData, {
+    headers: { "Content-Type": null },
+  });
 };
 
 export const lookupServiceRequest = (referenceCode, residentPhone) =>
@@ -34,7 +40,9 @@ export const uploadPaymentReceipt = (referenceCode, residentPhone, file) => {
   const formData = new FormData();
   formData.append("resident_phone", residentPhone);
   formData.append("receipt", file);
+  // See the Content-Type note in submitServiceRequest above — null (not a hardcoded
+  // "multipart/form-data" string) is required so the browser fills in the boundary.
   return apiClient.post(`/service-requests/${referenceCode}/payment-receipt`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+    headers: { "Content-Type": null },
   });
 };
