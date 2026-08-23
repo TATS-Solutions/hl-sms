@@ -53,7 +53,7 @@ export default function StaffLogin() {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="staff@hilongos.gov.ph"
+                        placeholder="admin@hilongos.gov.ph"
                         autoComplete="username"
                         className="w-full bg-input-background border border-border rounded-xl px-3.5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     />
