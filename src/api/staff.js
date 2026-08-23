@@ -21,3 +21,7 @@ export const assessServiceRequestFees = (id, payload) =>
 
 export const markOrderOfPaymentPaid = (orderOfPaymentId, payload) =>
   apiClient.post(`/admin/order-of-payments/${orderOfPaymentId}/mark-paid`, payload);
+
+// NOTE: backend endpoint does not exist yet — see PR description for the requested contract.
+export const verifyServiceRequestDocument = (documentId, payload) =>
+  apiClient.patch(`/admin/service-request-documents/${documentId}/verify`, payload);

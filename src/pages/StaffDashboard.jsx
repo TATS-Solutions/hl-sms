@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, CheckCircle2, Ban, UserX, RotateCcw, Receipt, X } from "lucide-react";
+import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, CheckCircle2, Ban, UserX, RotateCcw, Receipt, Paperclip, X } from "lucide-react";
 import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDepartments } from "../hooks/useDepartments";
@@ -8,6 +8,7 @@ import { fetchServiceRequests, fetchServiceRequestStats, updateServiceRequestSta
 import { getStatusInfo } from "../data/statusMap";
 import FeeAssessmentModal from "../components/FeeAssessmentModal";
 import PaymentVerificationModal from "../components/PaymentVerificationModal";
+import DocumentVerificationModal from "../components/DocumentVerificationModal";
 
 const ASSESSABLE_STATUSES = ["pending", "pending_assessment"];
 // pending_payment can only be reached via Assess Fees (creates the Order of
@@ -52,6 +53,7 @@ export default function StaffDashboard() {
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
   const [assessTarget, setAssessTarget] = useState(null);
   const [paymentTarget, setPaymentTarget] = useState(null);
+  const [documentsTarget, setDocumentsTarget] = useState(null);
 
   const isGlobalRole = user?.role === "admin" || user?.role === "treasurer";
   // Only the Treasurer's Office (and admin, for oversight) handles anything
@@ -318,8 +320,17 @@ export default function StaffDashboard() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {(nextOptions.length > 0 || ASSESSABLE_STATUSES.includes(r.status) || (canProcessPayments && PAYABLE_STATUSES.includes(r.status))) ? (
-                        <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          aria-label="View Documents"
+                          onClick={() => setDocumentsTarget(r)}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-card text-xs font-medium whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 text-muted-foreground hover:bg-secondary/40 border-border"
+                        >
+                          <Paperclip size={13} /> Documents
+                        </button>
+                        {(nextOptions.length > 0 || ASSESSABLE_STATUSES.includes(r.status) || (canProcessPayments && PAYABLE_STATUSES.includes(r.status))) && (
+                        <>
                           {ASSESSABLE_STATUSES.includes(r.status) && (
                             <button
                               type="button"
@@ -354,10 +365,9 @@ export default function StaffDashboard() {
                               </button>
                             );
                           })}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
+                        </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -431,6 +441,14 @@ export default function StaffDashboard() {
         <PaymentVerificationModal
           request={paymentTarget}
           onClose={() => setPaymentTarget(null)}
+          onSuccess={loadData}
+        />
+      )}
+
+      {documentsTarget && (
+        <DocumentVerificationModal
+          request={documentsTarget}
+          onClose={() => setDocumentsTarget(null)}
           onSuccess={loadData}
         />
       )}
