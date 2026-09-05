@@ -50,11 +50,7 @@ export default function Homepage() {
 
   const filtered = useMemo(() => {
     if (!cat) return services;
-    const matches = services.filter(s => s.department_id === cat);
-    if (matches.length === 0 && services.length > 0) {
-      console.warn(`Office id ${cat} matched no services — check CATEGORIES_FULL against the backend's department list.`);
-    }
-    return matches;
+    return services.filter(s => s.department_id === cat);
   }, [cat, services]);
 
   const departmentCounts = useMemo(() => {
