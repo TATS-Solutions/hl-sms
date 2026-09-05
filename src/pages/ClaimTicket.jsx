@@ -3,6 +3,9 @@ import { Link2, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import PaymentUpload from "../components/PaymentUpload";
 
+// Hidden for now per request — set back to true to restore the "Copy tracking link" button.
+const SHOW_COPY_TRACKING_LINK = false;
+
 export default function ClaimTicket() {
   const { reference } = useParams();
   const navigate = useNavigate();
@@ -129,7 +132,8 @@ export default function ClaimTicket() {
         />
       </div>
 
-      {booking.trackingUrl && (
+      {/* Hidden for now per request — flip SHOW_COPY_TRACKING_LINK back to true to restore */}
+      {SHOW_COPY_TRACKING_LINK && booking.trackingUrl && (
         <button
           onClick={handleCopyLink}
           className="w-full mt-4 flex items-center justify-center gap-2 border border-border rounded-xl py-2.5 text-sm font-medium hover:bg-card transition-colors"
