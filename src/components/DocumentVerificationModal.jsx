@@ -7,8 +7,14 @@ function DocumentRow({ document, onChanged }) {
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  // Verify/reject update the DB immediately, but the parent's `request` prop is a
+  // point-in-time snapshot that doesn't get refreshed in place — onChanged() triggers
+  // a background refetch, but this modal keeps rendering the stale object until it's
+  // closed and reopened. Track the outcome locally so the buttons react right away.
+  const [localOverride, setLocalOverride] = useState(null);
 
-  const status = document.status ?? "pending";
+  const status = localOverride?.status ?? document.status ?? "pending";
+  const rejectionReason = localOverride?.rejection_reason ?? document.rejection_reason;
   const isImage = document.mime_type?.startsWith("image/");
 
   const handleVerify = async () => {
@@ -16,6 +22,7 @@ function DocumentRow({ document, onChanged }) {
     setErrorMessage("");
     try {
       await verifyServiceRequestDocument(document.id, { status: "verified" });
+      setLocalOverride({ status: "verified" });
       onChanged();
     } catch (err) {
       setErrorMessage(err.response?.data?.message || "Couldn't verify document.");
@@ -33,6 +40,7 @@ function DocumentRow({ document, onChanged }) {
     setErrorMessage("");
     try {
       await verifyServiceRequestDocument(document.id, { status: "rejected", rejection_reason: reason.trim() });
+      setLocalOverride({ status: "rejected", rejection_reason: reason.trim() });
       onChanged();
     } catch (err) {
       setErrorMessage(err.response?.data?.message || "Couldn't reject document.");
@@ -142,8 +150,8 @@ function DocumentRow({ document, onChanged }) {
         </div>
       )}
 
-      {status !== "pending" && document.rejection_reason && (
-        <p className="text-xs text-destructive mt-1">Reason: {document.rejection_reason}</p>
+      {status !== "pending" && rejectionReason && (
+        <p className="text-xs text-destructive mt-1">Reason: {rejectionReason}</p>
       )}
 
       {errorMessage && <p className="text-xs text-destructive mt-1">{errorMessage}</p>}
