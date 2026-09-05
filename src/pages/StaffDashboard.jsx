@@ -54,6 +54,7 @@ export default function StaffDashboard() {
   const [assessTarget, setAssessTarget] = useState(null);
   const [paymentTarget, setPaymentTarget] = useState(null);
   const [documentsTarget, setDocumentsTarget] = useState(null);
+  const [actionError, setActionError] = useState("");
 
   const isGlobalRole = user?.role === "admin" || user?.role === "treasurer";
   // Only the Treasurer's Office (and admin, for oversight) handles anything
@@ -132,6 +133,7 @@ export default function StaffDashboard() {
   };
 
   const handleStatusChange = async (request, newStatus, cancellation_reason) => {
+    setActionError("");
     try {
       await updateServiceRequestStatus(request.id, {
         status: newStatus,
@@ -139,7 +141,7 @@ export default function StaffDashboard() {
       });
       loadData();
     } catch (err) {
-      alert(err.response?.data?.message || "Couldn't update status.");
+      setActionError(err.response?.data?.message || "Couldn't update status.");
     }
   };
 
@@ -195,6 +197,20 @@ export default function StaffDashboard() {
           <LogOut size={14} /> Sign out
         </button>
       </div>
+
+      {actionError && (
+        <div className="flex items-start justify-between gap-3 mb-6 bg-destructive/5 border border-destructive/30 rounded-xl px-4 py-3">
+          <p className="text-sm text-destructive">{actionError}</p>
+          <button
+            type="button"
+            onClick={() => setActionError("")}
+            aria-label="Dismiss"
+            className="text-destructive/70 hover:text-destructive flex-shrink-0"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
