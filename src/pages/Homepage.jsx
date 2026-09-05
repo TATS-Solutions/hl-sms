@@ -6,6 +6,7 @@ import { useServices } from "../hooks/useServices";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { matchServices } from "../utils/search";
 import hilongosLogo from "../assets/hilongos-logo.png";
+import heroImage from "../assets/hero-hilongos-church.jpg";
 
 const STEP_ICONS = [Search, CalendarCheck, IdCard, Ticket, Building2];
 
@@ -84,7 +85,7 @@ export default function Homepage() {
       {/* Hero */}
       <section className="relative min-h-[75vh] flex items-center bg-[#12294A]">
         <img
-          src="https://commons.wikimedia.org/wiki/Special:FilePath/Church_of_Hilongos,_Leyte.jpg?width=1600"
+          src={heroImage}
           alt="Church of Hilongos, Leyte, with its bell tower"
           className="absolute inset-0 w-full h-full object-cover opacity-25"
         />
