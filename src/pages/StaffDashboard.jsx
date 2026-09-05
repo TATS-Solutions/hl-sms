@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, CheckCircle2, Ban, UserX, RotateCcw, Receipt, Paperclip, X } from "lucide-react";
 import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
@@ -88,7 +88,7 @@ export default function StaffDashboard() {
       if (requestIdRef.current !== requestId) return;
       setRequests(listRes.data.data);
       setStats(statsRes.data.data);
-    } catch (err) {
+    } catch {
       if (requestIdRef.current !== requestId) return;
       setError("Couldn't load dashboard data. Please try again.");
     } finally {
@@ -110,6 +110,10 @@ export default function StaffDashboard() {
   }, [navigate]);
 
   useEffect(() => {
+    // Intentional: this is the refetch trigger both for the initial load (once auth
+    // verification resolves `user`) and for every filter change (loadData is recreated
+    // by buildParams' dependencies) — not something to derive during render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (user) loadData();
   }, [user, loadData]);
 

@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { Link2, Copy, Check } from "lucide-react";
+import { Link2, Check } from "lucide-react";
 import { useState } from "react";
 import PaymentUpload from "../components/PaymentUpload";
 

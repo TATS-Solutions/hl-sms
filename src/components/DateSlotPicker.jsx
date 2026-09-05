@@ -28,10 +28,12 @@ export default function DateSlotPicker({ serviceId, selectedDate, selectedSlot, 
 
   useEffect(() => {
     if (!selectedDate || !serviceId) {
-      setBookedSlots([]);
       return;
     }
     let cancelled = false;
+    // Intentional: resetting to a loading state before fetching fresh availability
+    // for the newly selected date, not something to derive during render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoadingAvailability(true);
     setBookedSlots([]);
     fetchServiceAvailability(serviceId, selectedDate.toISOString().slice(0, 10))

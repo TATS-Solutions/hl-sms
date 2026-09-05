@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Building2, FileText, CheckSquare, Square, Truck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, CheckSquare, Square, Truck } from "lucide-react";
 import { useServiceDetail } from "../hooks/useServiceDetail";
 import StepIndicator from "../components/StepIndicator";
 
