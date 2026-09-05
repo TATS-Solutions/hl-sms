@@ -45,6 +45,18 @@ export default function BookingFlow() {
     }
   }, [service, requirementFiles, navigate]);
 
+  // Once the resident starts entering their details, a reload/close would silently wipe
+  // everything (this flow keeps no state outside memory) — warn before that happens.
+  useEffect(() => {
+    if (step < 3) return;
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [step]);
+
   if (isLoading) {
     return <div className="max-w-2xl mx-auto px-4 py-16 text-center text-muted-foreground text-sm">Loading…</div>;
   }
