@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, ClipboardCheck, CreditCard, CheckCircle2, Ban, UserX, RotateCcw, Receipt, Paperclip, X } from "lucide-react";
+import { LogOut, ClipboardList, TrendingUp, CheckCircle, XCircle, Filter, Search, CreditCard, CheckCircle2, Ban, UserX, RotateCcw, Receipt, Paperclip, X, Landmark } from "lucide-react";
 import { isStaffAuthenticated, staffLogout, verifyStaffSession, getStoredStaffUser } from "../data/staffAuth";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useDepartments } from "../hooks/useDepartments";
@@ -10,17 +10,14 @@ import FeeAssessmentModal from "../components/FeeAssessmentModal";
 import PaymentVerificationModal from "../components/PaymentVerificationModal";
 import DocumentVerificationModal from "../components/DocumentVerificationModal";
 
-const ASSESSABLE_STATUSES = ["pending", "pending_assessment"];
-// pending_payment can only be reached via Assess Fees (creates the Order of
-// Payment) and processing only via Record Payment (requires an OR number) —
-// both carry data the generic status PATCH can't supply, so neither status
-// appears as a quick one-click transition target below.
-const PAYABLE_STATUSES = ["pending_payment"];
-
+// Status is server-computed now (RequestFlow) except for these four manual targets —
+// mirrors the backend's own allowedSources map, so a click here never 422s.
 const STATUS_TRANSITIONS = {
-  pending: ["pending_assessment", "cancelled", "no_show"],
+  pending: ["completed", "cancelled", "no_show"],
+  pending_verification: ["cancelled", "no_show"],
   pending_assessment: ["cancelled"],
-  pending_payment: ["cancelled"],
+  pending_issuance: ["cancelled"],
+  pending_payment: ["cancelled", "no_show"],
   processing: ["completed", "cancelled", "no_show"],
   completed: [],
   cancelled: ["pending"],
@@ -30,7 +27,6 @@ const STATUS_TRANSITIONS = {
 // Icon + label + color per target status, used to render the Update column as one-click action buttons.
 const STATUS_ACTION_ICONS = {
   pending: { Icon: RotateCcw, label: "Reopen", className: "text-yellow-700 hover:bg-yellow-50 border-yellow-200" },
-  pending_assessment: { Icon: ClipboardCheck, label: "Needs Assessment", className: "text-orange-700 hover:bg-orange-50 border-orange-200" },
   completed: { Icon: CheckCircle2, label: "Mark Completed", className: "text-green-700 hover:bg-green-50 border-green-200" },
   cancelled: { Icon: Ban, label: "Cancel", className: "text-red-700 hover:bg-red-50 border-red-200" },
   no_show: { Icon: UserX, label: "Mark No Show", className: "text-gray-700 hover:bg-gray-100 border-gray-300" },
@@ -190,12 +186,22 @@ export default function StaffDashboard() {
             {user?.department?.name || "Municipality of Hilongos"} · {user?.name} · {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
           </p>
         </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground flex-shrink-0"
-        >
-          <LogOut size={14} /> Sign out
-        </button>
+        <div className="flex items-center gap-4 flex-shrink-0">
+          {canProcessPayments && (
+            <button
+              onClick={() => navigate("/staff/treasury")}
+              className="flex items-center gap-1.5 text-sm text-primary hover:text-primary/80"
+            >
+              <Landmark size={14} /> Treasury Worklist
+            </button>
+          )}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <LogOut size={14} /> Sign out
+          </button>
+        </div>
       </div>
 
       {actionError && (
@@ -315,6 +321,13 @@ export default function StaffDashboard() {
               )}
               {!loading && !error && requests.map((r) => {
                 const nextOptions = STATUS_TRANSITIONS[r.status] || [];
+                const can = r.can || {};
+                const canOpenAssessment = can.propose_assessment || can.issue_order_of_payment || Boolean(r.order_of_payment);
+                const assessmentLabel = can.issue_order_of_payment
+                  ? "Issue Order of Payment"
+                  : can.propose_assessment
+                  ? "Assess Fees"
+                  : "View Assessment";
                 return (
                   <tr key={r.id} className="border-b border-border/60 last:border-0 hover:bg-secondary/30 transition-colors">
                     <td className="px-4 py-3 text-xs text-primary font-semibold whitespace-nowrap" style={{ fontFamily: "var(--font-mono)" }}>
@@ -349,19 +362,23 @@ export default function StaffDashboard() {
                         >
                           <Paperclip size={13} /> Documents
                         </button>
-                        {(nextOptions.length > 0 || ASSESSABLE_STATUSES.includes(r.status) || (canProcessPayments && PAYABLE_STATUSES.includes(r.status))) && (
+                        {(nextOptions.length > 0 || canOpenAssessment || can.confirm_payment) && (
                         <>
-                          {ASSESSABLE_STATUSES.includes(r.status) && (
+                          {canOpenAssessment && (
                             <button
                               type="button"
-                              aria-label="Assess Fees"
+                              aria-label={assessmentLabel}
                               onClick={() => setAssessTarget(r)}
-                              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-card text-xs font-medium whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 text-primary hover:bg-primary/10 border-primary/40"
+                              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-card text-xs font-medium whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+                                can.propose_assessment || can.issue_order_of_payment
+                                  ? "text-primary hover:bg-primary/10 border-primary/40"
+                                  : "text-muted-foreground hover:bg-secondary/40 border-border"
+                              }`}
                             >
-                              <Receipt size={13} /> Assess Fees
+                              <Receipt size={13} /> {assessmentLabel}
                             </button>
                           )}
-                          {canProcessPayments && PAYABLE_STATUSES.includes(r.status) && (
+                          {can.confirm_payment && (
                             <button
                               type="button"
                               aria-label="Record Payment"

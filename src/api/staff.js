@@ -16,12 +16,32 @@ export const fetchServiceRequestStats = (params = {}) =>
 export const updateServiceRequestStatus = (id, payload) =>
   apiClient.patch(`/admin/service-requests/${id}/status`, payload);
 
-export const assessServiceRequestFees = (id, payload) =>
-  apiClient.post(`/admin/service-requests/${id}/assess`, payload);
+// Department proposes an amount for a variable-fee service (staff, admin).
+export const proposeAssessment = (id, payload) =>
+  apiClient.post(`/admin/service-requests/${id}/propose-assessment`, payload);
 
-export const markOrderOfPaymentPaid = (orderOfPaymentId, payload) =>
-  apiClient.post(`/admin/order-of-payments/${orderOfPaymentId}/mark-paid`, payload);
+// Treasurer issues the official Order of Payment — {} approves the proposal as-is,
+// or pass { items, adjustment_note, penalty_amount } to amend it (treasurer, admin).
+export const issueOrderOfPayment = (id, payload = {}) =>
+  apiClient.post(`/admin/service-requests/${id}/order-of-payment`, payload);
 
-// NOTE: backend endpoint does not exist yet — see PR description for the requested contract.
+// Treasurer voids a proposal or an unpaid issued order (treasurer, admin).
+export const voidOrderOfPayment = (orderOfPaymentId, payload) =>
+  apiClient.post(`/admin/order-of-payments/${orderOfPaymentId}/void`, payload);
+
+// Treasurer records the OR number and settles payment in one step — replaces the
+// old propose-fees-then-mark-paid two-call flow (treasurer, admin).
+export const confirmPayment = (orderOfPaymentId, payload) =>
+  apiClient.post(`/admin/order-of-payments/${orderOfPaymentId}/confirm-payment`, payload);
+
+// The Treasurer's queue — bucket is "issuance" (default), "payment", or "receipts".
+export const fetchTreasuryWorklist = (bucket, params = {}) =>
+  apiClient.get("/admin/treasury/worklist", { params: { bucket, ...params } });
+
 export const verifyServiceRequestDocument = (documentId, payload) =>
   apiClient.patch(`/admin/service-request-documents/${documentId}/verify`, payload);
+
+// Verifies every outstanding document on a request in one action, or just the ones
+// in documentIds when supplied (staff, admin).
+export const bulkVerifyDocuments = (id, documentIds) =>
+  apiClient.post(`/admin/service-requests/${id}/documents/verify`, documentIds ? { document_ids: documentIds } : {});

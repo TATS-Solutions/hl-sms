@@ -1,8 +1,72 @@
 import { useState } from "react";
-import { Search } from "lucide-react";
-import { lookupServiceRequest } from "../api/serviceRequests";
+import { Search, Upload } from "lucide-react";
+import { lookupServiceRequest, replaceDocument } from "../api/serviceRequests";
 import { getStatusInfo } from "../data/statusMap";
 import PaymentUpload from "../components/PaymentUpload";
+
+const ACCEPTED_DOC_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+
+function RejectedDocumentCard({ document, referenceCode, residentPhone, onUploaded }) {
+  const [file, setFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleFileChange = (e) => {
+    const selected = e.target.files?.[0] ?? null;
+    setErrorMessage("");
+    if (selected && !ACCEPTED_DOC_TYPES.includes(selected.type)) {
+      setErrorMessage("Please upload a JPG, PNG, WEBP, or PDF file.");
+      setFile(null);
+      return;
+    }
+    setFile(selected);
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      setErrorMessage("Choose a replacement file first.");
+      return;
+    }
+    setErrorMessage("");
+    setSubmitting(true);
+    try {
+      await replaceDocument(referenceCode, document.id, residentPhone, file);
+      setFile(null);
+      onUploaded();
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || "Couldn't upload replacement document.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="border border-destructive/30 bg-destructive/5 rounded-lg p-3">
+      <div className="text-sm font-medium text-foreground mb-1">
+        {document.requirement?.requirement_text || "Document"}
+      </div>
+      <p className="text-xs text-destructive mb-2">Rejected: {document.rejection_reason}</p>
+      <div className="flex items-center gap-2 border border-dashed border-border rounded-lg px-3 py-2 bg-input-background mb-2">
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp,application/pdf"
+          onChange={handleFileChange}
+          disabled={submitting}
+          className="flex-1 text-xs text-muted-foreground cursor-pointer file:mr-3 file:py-1.5 file:px-3.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white file:cursor-pointer hover:file:bg-primary/90 disabled:opacity-50"
+        />
+      </div>
+      {errorMessage && <p className="text-xs text-destructive mb-2">{errorMessage}</p>}
+      <button
+        type="button"
+        onClick={handleUpload}
+        disabled={submitting || !file}
+        className="w-full flex items-center justify-center gap-2 bg-primary text-white rounded-lg py-2 text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        <Upload size={13} /> {submitting ? "Uploading…" : "Upload Replacement"}
+      </button>
+    </div>
+  );
+}
 
 export default function MyBookings() {
   const [reference, setReference] = useState("");
@@ -175,6 +239,25 @@ export default function MyBookings() {
                   orderOfPayment={booking.order_of_payment}
                   onUploaded={refreshBooking}
                 />
+              </div>
+            )}
+
+            {booking.documents?.some((d) => d.status === "rejected") && (
+              <div className="mt-4 pt-4 border-t border-border space-y-3">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Documents Needing Attention
+                </div>
+                {booking.documents
+                  .filter((d) => d.status === "rejected")
+                  .map((d) => (
+                    <RejectedDocumentCard
+                      key={d.id}
+                      document={d}
+                      referenceCode={booking.reference_code}
+                      residentPhone={mobile.trim()}
+                      onUploaded={refreshBooking}
+                    />
+                  ))}
               </div>
             )}
           </div>

@@ -91,11 +91,24 @@ export default function ClaimTicket() {
               }
             />
           </div>
+        ) : booking.status === "pending_verification" ? (
+          <div className="px-6 pb-5">
+            <p className="text-sm text-foreground bg-secondary/40 border border-border rounded-xl px-4 py-3">
+              Staff are reviewing your submitted documents.
+            </p>
+          </div>
         ) : booking.status === "pending_assessment" ? (
           <div className="px-6 pb-5">
             <p className="text-sm text-foreground bg-secondary/40 border border-border rounded-xl px-4 py-3">
               Staff will review your application and compute the required fees. Once assessed, you can pay online
               from the My Bookings page.
+            </p>
+          </div>
+        ) : booking.status === "pending_issuance" ? (
+          <div className="px-6 pb-5">
+            <p className="text-sm text-foreground bg-secondary/40 border border-border rounded-xl px-4 py-3">
+              Your assessment has been submitted to the Treasurer's Office for issuance. Once issued, you can pay
+              online from the My Bookings page.
             </p>
           </div>
         ) : (

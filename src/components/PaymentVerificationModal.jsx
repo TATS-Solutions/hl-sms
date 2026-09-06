@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { X, FileText, ExternalLink } from "lucide-react";
-import { markOrderOfPaymentPaid } from "../api/staff";
+import { confirmPayment } from "../api/staff";
 
 const PAYMENT_CHANNELS = [
   { value: "counter", label: "Counter (Cash)" },
   { value: "gcash", label: "GCash" },
-  { value: "bank_transfer", label: "Bank Transfer" },
-  { value: "check", label: "Check" },
+  { value: "landbank", label: "Landbank" },
 ];
+
+const nowForDatetimeLocal = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
 export default function PaymentVerificationModal({ request, onClose, onSuccess }) {
   const [orNumber, setOrNumber] = useState("");
   const [paymentChannel, setPaymentChannel] = useState("counter");
+  const [paidAt, setPaidAt] = useState("");
+  const [maxPaidAt] = useState(nowForDatetimeLocal);
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -27,9 +30,10 @@ export default function PaymentVerificationModal({ request, onClose, onSuccess }
     setErrorMessage("");
     setSubmitting(true);
     try {
-      await markOrderOfPaymentPaid(orderOfPayment.id, {
+      await confirmPayment(orderOfPayment.id, {
         or_number: orNumber.trim(),
         payment_channel: paymentChannel,
+        ...(paidAt ? { paid_at: paidAt } : {}),
       });
       onSuccess();
       onClose();
@@ -151,6 +155,18 @@ export default function PaymentVerificationModal({ request, onClose, onSuccess }
               <option key={c.value} value={c.value}>{c.label}</option>
             ))}
           </select>
+
+          <label className="block text-[10px] uppercase tracking-widest text-muted-foreground mb-1 mt-4">
+            Paid At (optional — backdate a counter payment)
+          </label>
+          <input
+            type="datetime-local"
+            value={paidAt}
+            max={maxPaidAt}
+            onChange={(e) => setPaidAt(e.target.value)}
+            className="w-full bg-secondary/40 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <p className="text-[10px] text-muted-foreground mt-1">Leave blank to record this payment as happening now.</p>
 
           {errorMessage && (
             <p className="text-xs text-destructive mt-3">{errorMessage}</p>

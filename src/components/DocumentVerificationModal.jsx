@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { X, FileText, ExternalLink, Check } from "lucide-react";
-import { verifyServiceRequestDocument } from "../api/staff";
+import { X, FileText, ExternalLink, Check, CheckCheck } from "lucide-react";
+import { verifyServiceRequestDocument, bulkVerifyDocuments } from "../api/staff";
 
-function DocumentRow({ document, onChanged }) {
+function DocumentRow({ document, onChanged, canVerify }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -94,7 +94,11 @@ function DocumentRow({ document, onChanged }) {
         )
       )}
 
-      {status === "pending" && !rejecting && (
+      {status === "pending" && !canVerify && (
+        <p className="text-xs text-muted-foreground">Awaiting review by the processing department.</p>
+      )}
+
+      {status === "pending" && canVerify && !rejecting && (
         <div className="flex gap-2">
           <button
             type="button"
@@ -160,12 +164,31 @@ function DocumentRow({ document, onChanged }) {
 }
 
 export default function DocumentVerificationModal({ request, onClose, onSuccess }) {
+  const [bulkSubmitting, setBulkSubmitting] = useState(false);
+  const [bulkError, setBulkError] = useState("");
+
   if (!request) return null;
 
   const documents = request.documents || [];
+  const outstandingCount = documents.filter((d) => (d.status ?? "pending") !== "verified").length;
+  const canVerify = Boolean(request.can?.verify_documents);
 
   const handleChanged = () => {
     onSuccess();
+  };
+
+  const handleVerifyAll = async () => {
+    setBulkError("");
+    setBulkSubmitting(true);
+    try {
+      await bulkVerifyDocuments(request.id);
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setBulkError(err.response?.data?.message || "Couldn't verify all documents.");
+    } finally {
+      setBulkSubmitting(false);
+    }
   };
 
   return (
@@ -188,6 +211,20 @@ export default function DocumentVerificationModal({ request, onClose, onSuccess 
           </button>
         </div>
 
+        {canVerify && outstandingCount > 1 && (
+          <div className="px-5 pt-4 flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleVerifyAll}
+              disabled={bulkSubmitting}
+              className="w-full flex items-center justify-center gap-1.5 bg-accent text-white rounded-lg py-2 text-xs font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50"
+            >
+              <CheckCheck size={14} /> {bulkSubmitting ? "Verifying…" : `Verify All (${outstandingCount})`}
+            </button>
+            {bulkError && <p className="text-xs text-destructive mt-1.5">{bulkError}</p>}
+          </div>
+        )}
+
         <div className="p-5 overflow-y-auto space-y-3">
           {documents.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">
@@ -195,7 +232,7 @@ export default function DocumentVerificationModal({ request, onClose, onSuccess 
             </p>
           ) : (
             documents.map((document) => (
-              <DocumentRow key={document.id} document={document} onChanged={handleChanged} />
+              <DocumentRow key={document.id} document={document} onChanged={handleChanged} canVerify={canVerify} />
             ))
           )}
         </div>

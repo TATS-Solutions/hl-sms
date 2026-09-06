@@ -46,3 +46,15 @@ export const uploadPaymentReceipt = (referenceCode, residentPhone, file) => {
     headers: { "Content-Type": null },
   });
 };
+
+// Resident replaces a document a reviewer rejected — only works while that specific
+// document's status is "rejected". Same ownership/rate-limit model as lookup().
+export const replaceDocument = (referenceCode, documentId, residentPhone, file) => {
+  const formData = new FormData();
+  formData.append("resident_phone", residentPhone);
+  formData.append("document", file);
+  // See the Content-Type note in submitServiceRequest above.
+  return apiClient.post(`/service-requests/${referenceCode}/documents/${documentId}`, formData, {
+    headers: { "Content-Type": null },
+  });
+};
